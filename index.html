@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>La Mezcla Perfecta</title>
+
+
+    <style>
+
+        /* =========================================
+           CONFIGURACIÓN GENERAL
+        ========================================= */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+
+            margin: 0;
+            padding: 0;
+
+            width: 100%;
+            height: 100%;
+
+            background-color: #080316;
+
+            overflow: hidden;
+        }
+
+
+        /* =========================================
+           TABLERO
+        ========================================= */
+
+        .tablero {
+
+            width: 100vw;
+            height: 100vh;
+
+            position: relative;
+
+            background-image: url("plantilla.jpg");
+
+            background-size: contain;
+
+            background-repeat: no-repeat;
+
+            background-position: center center;
+        }
+
+
+        /* =========================================
+           ZONA INVISIBLE DEL TÍTULO
+        ========================================= */
+
+        .zona-titulo {
+
+            position: absolute;
+
+            top: 0%;
+            left: 0%;
+
+            width: 100%;
+            height: 20%;
+
+            background: transparent;
+
+            cursor: pointer;
+
+            z-index: 10;
+        }
+
+
+        /* =========================================
+           CASILLAS
+        ========================================= */
+
+        .casilla {
+
+            position: absolute;
+
+            border: none;
+
+            background: transparent;
+
+            padding: 0;
+
+            margin: 0;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+        }
+
+
+        /* =========================================
+           IMAGEN / LOGO
+        ========================================= */
+
+        .casilla img {
+
+            width: 75%;
+
+            height: 75%;
+
+            object-fit: contain;
+
+            opacity: 0;
+
+            transform: scale(0.7);
+
+            transition:
+
+                opacity 0.15s ease,
+
+                transform 0.15s ease;
+        }
+
+
+        /* =========================================
+           CUANDO SE ACTIVA LA CASILLA
+        ========================================= */
+
+        .casilla.activa img {
+
+            opacity: 1;
+
+            transform: scale(1);
+        }
+
+
+        /* =========================================
+           LOGO ESPECIAL x2
+        ========================================= */
+
+        .casilla.especial img {
+
+            opacity: 1;
+
+            transform: scale(1);
+        }
+
+
+        /* =========================================
+           FILAS
+        ========================================= */
+
+        .fila1 {
+
+            top: 30.8%;
+
+            height: 13.2%;
+        }
+
+
+        .fila2 {
+
+            top: 47%;
+
+            height: 13.6%;
+        }
+
+
+        .fila3 {
+
+            top: 63.1%;
+
+            height: 13.6%;
+        }
+
+
+        .fila4 {
+
+            top: 79%;
+
+            height: 13.8%;
+        }
+
+
+        /* =========================================
+           COLUMNAS
+        ========================================= */
+
+        .ronda1 {
+
+            left: 33.1%;
+
+            width: 10%;
+        }
+
+
+        .ronda2 {
+
+            left: 44.4%;
+
+            width: 10%;
+        }
+
+
+        .ronda3 {
+
+            left: 55.9%;
+
+            width: 10%;
+        }
+
+
+        .ronda4 {
+
+            left: 67%;
+
+            width: 10%;
+        }
+
+
+        /* =========================================
+           TOTAL
+        ========================================= */
+
+        .total {
+
+            left: 78%;
+
+            width: 10%;
+
+            cursor: default;
+        }
+
+
+        .numero-total {
+
+            font-family: Arial, Helvetica, sans-serif;
+
+            font-size: clamp(30px, 4vw, 70px);
+
+            font-weight: bold;
+
+            color: #000;
+
+            line-height: 1;
+
+            user-select: none;
+        }
+
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- =========================================
+         TABLERO
+    ========================================== -->
+
+    <div class="tablero">
+
+
+        <!-- =====================================
+             ZONA INVISIBLE DEL TÍTULO
+        ====================================== -->
+
+        <div class="zona-titulo" id="zonaTitulo"></div>
+
+
+        <!-- =====================================
+             PAREJA 1
+        ====================================== -->
+
+        <button class="casilla fila1 ronda1">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <button class="casilla fila1 ronda2">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <button class="casilla fila1 ronda3">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <button class="casilla fila1 ronda4">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <!-- TOTAL PAREJA 1 -->
+
+        <div class="casilla fila1 total">
+
+            <span
+                class="numero-total"
+                id="total1">
+                0
+            </span>
+
+        </div>
+
+
+
+        <!-- =====================================
+             PAREJA 2
+        ====================================== -->
+
+        <button class="casilla fila2 ronda1">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <button class="casilla fila2 ronda2">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <button class="casilla fila2 ronda3">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <button class="casilla fila2 ronda4">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <!-- TOTAL PAREJA 2 -->
+
+        <div class="casilla fila2 total">
+
+            <span
+                class="numero-total"
+                id="total2">
+                0
+            </span>
+
+        </div>
+
+
+
+        <!-- =====================================
+             PAREJA 3
+        ====================================== -->
+
+        <button class="casilla fila3 ronda1">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <button class="casilla fila3 ronda2">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <button class="casilla fila3 ronda3">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <button class="casilla fila3 ronda4">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <!-- TOTAL PAREJA 3 -->
+
+        <div class="casilla fila3 total">
+
+            <span
+                class="numero-total"
+                id="total3">
+                0
+            </span>
+
+        </div>
+
+
+
+        <!-- =====================================
+             PAREJA 4
+        ====================================== -->
+
+        <button class="casilla fila4 ronda1">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <button class="casilla fila4 ronda2">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <button class="casilla fila4 ronda3">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <button class="casilla fila4 ronda4">
+
+            <img src="logo.png" alt="Punto">
+
+        </button>
+
+
+        <!-- TOTAL PAREJA 4 -->
+
+        <div class="casilla fila4 total">
+
+            <span
+                class="numero-total"
+                id="total4">
+                0
+            </span>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =========================================
+         JAVASCRIPT
+    ========================================== -->
+
+    <script>
+
+
+        /*
+        =========================================
+        MODO LOGO ESPECIAL x2
+        =========================================
+        */
+
+        let modoLogo2 = false;
+
+        const zonaTitulo =
+            document.getElementById("zonaTitulo");
+
+
+        /*
+        =========================================
+        PRESIONAR EL TÍTULO
+        =========================================
+        */
+
+        zonaTitulo.addEventListener(
+            "click",
+            function() {
+
+                modoLogo2 = !modoLogo2;
+
+                console.log(
+                    modoLogo2
+                        ? "Modo logo x2 ACTIVADO"
+                        : "Modo logo x2 DESACTIVADO"
+                );
+
+            }
+        );
+
+
+
+        /*
+        =========================================
+        BUSCAR TODAS LAS CASILLAS
+        =========================================
+        */
+
+        const casillas =
+            document.querySelectorAll(
+                ".casilla:not(.total)"
+            );
+
+
+
+        /*
+        =========================================
+        CUANDO SE PRESIONA UNA CASILLA
+        =========================================
+        */
+
+        casillas.forEach(
+            function(casilla) {
+
+                casilla.addEventListener(
+                    "click",
+                    function() {
+
+
+                        /*
+                        =================================
+                        MODO LOGO x2
+                        =================================
+                        */
+
+                        if (modoLogo2) {
+
+
+                            /*
+                            Solo funciona en RONDA 4
+                            */
+
+                            if (
+                                casilla.classList.contains(
+                                    "ronda4"
+                                )
+                            ) {
+
+
+                                const imagen =
+                                    casilla.querySelector(
+                                        "img"
+                                    );
+
+
+                                /*
+                                Si ya tiene logo2,
+                                vuelve al logo normal
+                                */
+
+                                if (
+                                    casilla.classList.contains(
+                                        "especial"
+                                    )
+                                ) {
+
+                                    imagen.src =
+                                        "logo.png";
+
+                                    imagen.alt =
+                                        "Punto";
+
+                                    casilla.classList.remove(
+                                        "especial"
+                                    );
+
+                                    casilla.classList.remove(
+                                        "activa"
+                                    );
+
+                                }
+
+                                /*
+                                Si no tiene logo2,
+                                coloca el logo especial
+                                */
+
+                                else {
+
+                                    imagen.src =
+                                        "logo2.png";
+
+                                    imagen.alt =
+                                        "2 puntos";
+
+                                    casilla.classList.add(
+                                        "especial"
+                                    );
+
+                                    casilla.classList.add(
+                                        "activa"
+                                    );
+
+                                }
+
+
+                                actualizarTotales();
+
+                            }
+
+
+                            /*
+                            Evitamos que el modo especial
+                            ejecute el funcionamiento normal
+                            */
+
+                            return;
+
+                        }
+
+
+
+                        /*
+                        =================================
+                        FUNCIONAMIENTO NORMAL
+                        =================================
+                        */
+
+                        casilla.classList.toggle(
+                            "activa"
+                        );
+
+
+                        /*
+                        Si se desactiva una casilla
+                        especial, restauramos logo.png
+                        */
+
+                        if (
+                            !casilla.classList.contains(
+                                "activa"
+                            )
+                        ) {
+
+                            if (
+                                casilla.classList.contains(
+                                    "especial"
+                                )
+                            ) {
+
+                                const imagen =
+                                    casilla.querySelector(
+                                        "img"
+                                    );
+
+                                imagen.src =
+                                    "logo.png";
+
+                                imagen.alt =
+                                    "Punto";
+
+                                casilla.classList.remove(
+                                    "especial"
+                                );
+
+                            }
+
+                        }
+
+
+                        actualizarTotales();
+
+
+                    }
+                );
+
+            }
+        );
+
+
+
+        /*
+        =========================================
+        CALCULAR LOS TOTALES
+        =========================================
+        */
+
+        function actualizarTotales() {
+
+
+            /*
+            Recorremos las 4 parejas
+            */
+
+            for (
+                let pareja = 1;
+                pareja <= 4;
+                pareja++
+            ) {
+
+
+                /*
+                Buscamos las casillas
+                correspondientes a esa pareja
+                */
+
+                const fila =
+                    document.querySelectorAll(
+                        ".fila" +
+                        pareja +
+                        ":not(.total)"
+                    );
+
+
+                /*
+                Comenzamos en 0 puntos
+                */
+
+                let puntos = 0;
+
+
+                /*
+                Revisamos las 4 rondas
+                */
+
+                fila.forEach(
+                    function(casilla) {
+
+
+                        /*
+                        Si la casilla está activa
+                        */
+
+                        if (
+                            casilla.classList.contains(
+                                "activa"
+                            )
+                        ) {
+
+
+                            /*
+                            Logo especial = 2 puntos
+                            */
+
+                            if (
+                                casilla.classList.contains(
+                                    "especial"
+                                )
+                            ) {
+
+                                puntos += 2;
+
+                            }
+
+                            /*
+                            Logo normal = 1 punto
+                            */
+
+                            else {
+
+                                puntos += 1;
+
+                            }
+
+                        }
+
+                    }
+                );
+
+
+                /*
+                Mostramos el total
+                */
+
+                document.getElementById(
+                    "total" + pareja
+                ).textContent = puntos;
+
+
+            }
+
+        }
+
+
+
+        /*
+        =========================================
+        TECLA ESC
+        =========================================
+
+        Presionar ESC elimina todos
+        los logos y vuelve los totales a 0.
+        */
+
+        document.addEventListener(
+            "keydown",
+            function(event) {
+
+
+                if (event.key === "Escape") {
+
+
+                    /*
+                    Quitamos todos los logos
+                    */
+
+                    casillas.forEach(
+                        function(casilla) {
+
+
+                            casilla.classList.remove(
+                                "activa"
+                            );
+
+                            casilla.classList.remove(
+                                "especial"
+                            );
+
+
+                            /*
+                            Restauramos el logo normal
+                            */
+
+                            const imagen =
+                                casilla.querySelector(
+                                    "img"
+                                );
+
+                            imagen.src =
+                                "logo.png";
+
+                            imagen.alt =
+                                "Punto";
+
+                        }
+                    );
+
+
+                    /*
+                    Desactivamos el modo x2
+                    */
+
+                    modoLogo2 = false;
+
+
+                    /*
+                    Actualizamos los totales
+                    */
+
+                    actualizarTotales();
+
+
+                }
+
+            }
+        );
+
+
+    </script>
+
+
+</body>
+
+</html>
