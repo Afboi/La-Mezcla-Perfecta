@@ -14,11 +14,11 @@
 			overflow: hidden;
 		}
 
-		/* Main grid layout: 3 columns (side margins sized by aspect-ratio, not px) x 2 rows (stage + bottom bar) */
+		/* Main grid layout: 3 columns (side margins sized by aspect-ratio, not px), single row (no footer) */
 		body {
 			display: grid;
 			grid-template-columns: auto 1fr auto;
-			grid-template-rows: 1fr auto;
+			grid-template-rows: 1fr;
 			gap: 0;
 		}
 
@@ -97,19 +97,21 @@
 			overflow: hidden;
 		}
 
-		/* Bottom bar: its own row, sized to content (auto), spans all columns */
-		#bottomBar {
-			grid-column: 1 / 4;
-			grid-row: 2;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			padding: 16px;
-			color: #fff;
-			background: rgba(0, 0, 0, 0.3);
-			border-top: 1px solid rgba(255,255,255,0.1);
-			z-index: 2;
+		/* Small connection-status dot, replaces the old footer entirely */
+		#statusDot {
+			position: fixed;
+			right: 10px;
+			bottom: 10px;
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			background: #999;
+			box-shadow: 0 0 6px rgba(0,0,0,0.5);
+			z-index: 50;
+			transition: background 0.3s ease;
 		}
+		#statusDot.ok { background: #2ecc71; }
+		#statusDot.err { background: #e74c3c; }
 
 		/* App wrapper: 16:9 box, size is set explicitly in px by JS (layoutStage()) so it always
 		   fits inside #appContainer without being clipped or collapsing to 0 in a flex parent. */
@@ -192,17 +194,40 @@
 			transform: scale(1);
 		}
 
-		.fila1 { top: 30.8%; height: 13.2%; }
-		.fila2 { top: 47%; height: 13.6%; }
-		.fila3 { top: 63.1%; height: 13.6%; }
-		.fila4 { top: 79%; height: 13.8%; }
+		/* Row/column percentages measured directly from Plantilla.jpg's white cell
+		   boundaries (pixel-scanned), not eyeballed — the old values were off by
+		   3-4% on every column, which is why logos/totals rendered shifted left. */
+		.fila1 { top: 30.19%; height: 14.91%; }
+		.fila2 { top: 45.74%; height: 15.46%; }
+		.fila3 { top: 61.85%; height: 15.56%; }
+		.fila4 { top: 78.06%; height: 15.74%; }
 
-		.ronda1 { left: 33.1%; width: 10%; }
-		.ronda2 { left: 44.4%; width: 10%; }
-		.ronda3 { left: 55.9%; width: 10%; }
-		.ronda4 { left: 67%; width: 10%; }
+		.ronda1 { left: 30.10%; width: 12.45%; }
+		.ronda2 { left: 42.97%; width: 12.86%; }
+		.ronda3 { left: 56.25%; width: 12.45%; }
+		.ronda4 { left: 69.11%; width: 12.19%; }
 
-		.total { left: 78%; width: 10%; cursor: default; }
+		.total { left: 82.03%; width: 11.20%; cursor: default; }
+
+		/* Real player name, drawn on the underline next to "PAREJA X:" in the artwork */
+		.name-label {
+			position: absolute;
+			left: 24%;
+			width: 6.5%;
+			display: flex;
+			align-items: center;
+			padding-top: 1.2%;
+			font-family: Arial, Helvetica, sans-serif;
+			font-weight: 700;
+			font-style: italic;
+			font-size: clamp(8px, 0.85vw, 15px);
+			color: #333;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			pointer-events: none;
+			z-index: 5;
+		}
 
 		.numero-total {
 			font-family: Arial, Helvetica, sans-serif;
@@ -213,71 +238,143 @@
 			user-select: none;
 		}
 
-		/* UI Elements */
-		.three-placeholders {
-			display: flex;
-			gap: 8px;
-			padding: 8px;
-			background: rgba(17,17,17,0.9);
-			color: #fff;
-			flex-wrap: wrap;
+		/* Local particle burst where a casilla gets marked */
+		.mark-particle {
+			position: absolute;
+			border-radius: 50%;
+			pointer-events: none;
+			z-index: 20;
+			animation: markBurst 550ms ease-out forwards;
+		}
+		@keyframes markBurst {
+			0% { transform: translate(0,0) scale(1); opacity: 1; }
+			100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
 		}
 
-		.ph {
-			flex: 1;
-			min-width: 100px;
-			background: rgba(34,34,34,0.9);
-			border-radius: 6px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			padding: 12px;
-			font-size: 12px;
+		/* Extra decorations layered inside the fullscreen scene overlay */
+		#sceneExtras {
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+			overflow: hidden;
 		}
 
-		.view-grid {
-			display: grid;
-			grid-template-columns: repeat(5, 1fr);
-			gap: 6px;
-			padding: 12px;
-			background: rgba(243,244,246,0.1);
-			overflow-y: auto;
-			max-height: 200px;
+		/* Coreografía: sweeping spotlight beams */
+		.spotlight {
+			position: absolute;
+			top: -20%;
+			width: 40%;
+			height: 140%;
+			background: linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 70%);
+			clip-path: polygon(48% 0, 52% 0, 100% 100%, 0% 100%);
+			animation: sweep 3.2s ease-in-out infinite;
+			mix-blend-mode: screen;
+		}
+		.spotlight.s1 { left: -10%; animation-delay: 0s; }
+		.spotlight.s2 { left: 30%; animation-delay: -1.1s; background: linear-gradient(180deg, rgba(120,200,255,0.35), rgba(120,200,255,0) 70%); }
+		.spotlight.s3 { left: 70%; animation-delay: -2.2s; background: linear-gradient(180deg, rgba(255,120,220,0.35), rgba(255,120,220,0) 70%); }
+		@keyframes sweep {
+			0%, 100% { transform: rotate(-22deg); }
+			50% { transform: rotate(22deg); }
 		}
 
-		.cell {
-			background: rgba(255,255,255,0.1);
-			border: 1px solid rgba(200,200,200,0.3);
-			padding: 12px;
-			border-radius: 4px;
-			text-align: center;
-			font-size: 11px;
-			color: rgba(255,255,255,0.8);
+		/* Cortejo: animals popping in */
+		.pop-img {
+			position: absolute;
+			width: 90px;
+			height: 90px;
+			object-fit: contain;
+			filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5));
+			animation: popIn 1.6s cubic-bezier(.34,1.56,.64,1) both;
+		}
+		@keyframes popIn {
+			0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+			15% { transform: scale(1.15) rotate(8deg); opacity: 1; }
+			30% { transform: scale(1) rotate(-4deg); }
+			80% { transform: scale(1) rotate(0deg); opacity: 1; }
+			100% { transform: scale(0.7) translateY(-30px); opacity: 0; }
 		}
 
-		.cell.marked {
-			background: rgba(11,121,255,0.7);
-			color: #fff;
-			border-color: rgba(7,91,181,0.7);
+		/* Globos: balloons floating upward */
+		.balloon-img {
+			position: absolute;
+			bottom: -120px;
+			width: 90px;
+			height: 90px;
+			object-fit: contain;
+			animation: floatUp 3.4s ease-in forwards;
+		}
+		@keyframes floatUp {
+			0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+			10% { opacity: 1; }
+			100% { transform: translateY(-140vh) translateX(var(--sway, 20px)) rotate(var(--rot, 10deg)); opacity: 0; }
 		}
 
-		/* Status elements */
-		.status-text {
-			opacity: 0.95;
-			position: relative;
-			z-index: 3;
-			font-size: 14px;
+		/* Cantala si puedes: pulsing microphone + sound waves */
+		.mic-img {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			width: 160px;
+			height: 160px;
+			object-fit: contain;
+			transform: translate(-50%,-50%);
+			animation: micPulse 1s ease-in-out infinite;
+			filter: drop-shadow(0 10px 24px rgba(0,0,0,0.6));
+		}
+		@keyframes micPulse {
+			0%, 100% { transform: translate(-50%,-50%) scale(1) rotate(-4deg); }
+			50% { transform: translate(-50%,-50%) scale(1.12) rotate(4deg); }
+		}
+		.sound-wave {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			width: 40px;
+			height: 40px;
+			border: 3px solid rgba(255,255,255,0.7);
+			border-radius: 50%;
+			transform: translate(-50%,-50%);
+			animation: waveOut 1.8s ease-out infinite;
+		}
+		.sound-wave.w2 { animation-delay: 0.6s; }
+		.sound-wave.w3 { animation-delay: 1.2s; }
+		@keyframes waveOut {
+			0% { width: 40px; height: 40px; opacity: 0.8; }
+			100% { width: 420px; height: 420px; opacity: 0; }
 		}
 
-		.players-display {
-			font-weight: 600;
-			margin-right: 16px;
-			flex: 0 0 auto;
-			white-space: nowrap;
+		/* Winner scene: trophy / medal / party popper */
+		.winner-img {
+			position: absolute;
+			width: 120px;
+			height: 120px;
+			object-fit: contain;
+			filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+			animation: winnerBounce 1.2s cubic-bezier(.34,1.56,.64,1) both;
+		}
+		@keyframes winnerBounce {
+			0% { transform: scale(0) translateY(60px) rotate(-20deg); opacity: 0; }
+			60% { transform: scale(1.2) translateY(-10px) rotate(8deg); opacity: 1; }
+			100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
 		}
 
-		#bottomBar {
-			flex-wrap: wrap;
+		/* Intento fallido */
+		.fail-img {
+			position: absolute;
+			left: 50%;
+			top: 32%;
+			width: 140px;
+			height: 140px;
+			object-fit: contain;
+			transform: translate(-50%,-50%);
+			animation: failShake 0.6s ease-in-out 2;
+			filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
+		}
+		@keyframes failShake {
+			0%, 100% { transform: translate(-50%,-50%) rotate(0deg); }
+			25% { transform: translate(-60%,-50%) rotate(-8deg); }
+			75% { transform: translate(-40%,-50%) rotate(8deg); }
 		}
 
 		/* Scene overlay */
@@ -339,6 +436,11 @@
 				<div class="embedded-game">
 					<div class="tablero">
 						<div class="zona-titulo" id="zonaTitulo"></div>
+						<!-- Real player names, drawn over the "PAREJA X:" underline in the artwork -->
+						<div class="name-label fila1" id="nameLabel1"></div>
+						<div class="name-label fila2" id="nameLabel2"></div>
+						<div class="name-label fila3" id="nameLabel3"></div>
+						<div class="name-label fila4" id="nameLabel4"></div>
 						<!-- Row 1 -->
 						<button class="casilla fila1 ronda1"><img src="/resources/Logo.png" alt="Punto"></button>
 						<button class="casilla fila1 ronda2"><img src="/resources/Logo.png" alt="Punto"></button>
@@ -372,16 +474,14 @@
 	<!-- Right margin (gradient) -->
 	<div id="marginRight"></div>
 
-	<!-- Bottom bar -->
-	<div id="bottomBar">
-		<div class="players-display" id="playersDisplay">Pareja 1 · Pareja 2 · Pareja 3 · Pareja 4</div>
-		<div class="status-text" id="statusText">Ready</div>
-	</div>
+	<!-- Tiny connection indicator, replaces the old footer -->
+	<div id="statusDot"></div>
 
 	<!-- Scene overlay -->
 	<div id="sceneOverlay">
 		<div id="sceneBackdrop"></div>
 		<canvas id="sceneCanvas" width="800" height="600"></canvas>
+		<div id="sceneExtras"></div>
 		<div id="sceneContent">
 			<div id="sceneText"></div>
 		</div>
@@ -426,6 +526,12 @@
 				});
 			}
 
+			// Local particle burst wherever a casilla just got marked, called lazily
+			// (defined later, in the scene-overlay script) so it's safe to reference here.
+			function burst(casilla){
+				if(typeof window.burstAtElement === 'function') window.burstAtElement(casilla);
+			}
+
 			casillas.forEach((casilla) => {
 				casilla.addEventListener('click', ()=>{
 					if(modoLogo2){
@@ -439,13 +545,16 @@
 								imagen.src = '/resources/Logo2.png';
 								imagen.alt='2 puntos';
 								casilla.classList.add('especial','activa');
+								burst(casilla);
 							}
 							actualizarTotales();
 						}
 						return;
 					}
 					casilla.classList.toggle('activa');
-					if(!casilla.classList.contains('activa') && casilla.classList.contains('especial')){
+					if(casilla.classList.contains('activa')){
+						burst(casilla);
+					} else if(casilla.classList.contains('especial')){
 						const imagen = casilla.querySelector('img');
 						imagen.src = '/resources/Logo.png';
 						imagen.alt='Punto';
@@ -455,17 +564,35 @@
 				});
 			});
 
+			// Which parejas have already had their winner scene fired, so it only
+			// plays once per completed row (reset on ESC).
+			const wonParejas = new Set();
+
 			function actualizarTotales(){
 				for(let pareja=1; pareja<=4; pareja++){
-					const fila = Array.from(container.querySelectorAll('.fila'+pareja+':not(.total)'));
+					const fila = Array.from(container.querySelectorAll('.casilla.fila'+pareja+':not(.total)'));
 					let puntos = 0;
+					let activeCount = 0;
 					fila.forEach(c=>{
 						if(c.classList.contains('activa')){
 							puntos += c.classList.contains('especial')?2:1;
+							activeCount++;
 						}
 					});
 					const el = container.querySelector('#total'+pareja);
 					if(el) el.textContent = puntos;
+
+					// Marking the last empty space in a pareja's row means that pareja
+					// just won the round: fire the automatic "PAREJA X GANADORA" scene.
+					const parejaIdx = pareja - 1;
+					if(activeCount === fila.length && fila.length > 0){
+						if(!wonParejas.has(parejaIdx)){
+							wonParejas.add(parejaIdx);
+							if(typeof window.triggerWinnerScene === 'function') window.triggerWinnerScene(parejaIdx);
+						}
+					} else {
+						wonParejas.delete(parejaIdx);
+					}
 				}
 			}
 
@@ -480,6 +607,7 @@
 						}
 					});
 					modoLogo2 = false;
+					wonParejas.clear();
 					actualizarTotales();
 				}
 			});
@@ -489,6 +617,7 @@
 				if(!c) return;
 				if(value){
 					c.classList.add('activa');
+					burst(c);
 				} else {
 					c.classList.remove('activa');
 					c.classList.remove('especial');
@@ -506,20 +635,21 @@
 		let playerNames = ['Pareja 1','Pareja 2','Pareja 3','Pareja 4'];
 
 		function renderPlayers(){
-			const el = document.getElementById('playersDisplay');
-			if(!el) return;
-			el.textContent = playerNames.join(' · ');
+			for(let i=0;i<4;i++){
+				const el = document.getElementById('nameLabel'+(i+1));
+				if(el) el.textContent = playerNames[i] || ('Pareja '+(i+1));
+			}
 		}
 
+		const statusDot = document.getElementById('statusDot');
 		const es = new EventSource('/events');
 		es.onopen = () => {
-			document.getElementById('statusText').textContent = '✅ Connected';
+			if(statusDot){ statusDot.classList.add('ok'); statusDot.classList.remove('err'); }
 		};
 		es.onmessage = (e) => {
 			try{
 				const data = JSON.parse(e.data);
 				if(data.type === 'control'){
-					document.getElementById('statusText').textContent = `${data.action}`;
 					if (typeof window.showScene === 'function') window.showScene(data.action);
 				} else if (data.type === 'names'){
 					if(Array.isArray(data.names)){
@@ -535,16 +665,49 @@
 			}catch(err){ console.error('Event parse error:', e.data); }
 		};
 		es.onerror = ()=>{
-			document.getElementById('statusText').textContent = '⚠️ Connection lost';
+			if(statusDot){ statusDot.classList.add('err'); statusDot.classList.remove('ok'); }
 		};
 
 		renderPlayers();
 
-		// Scene overlay
+		// Local particle burst at any element (used when a casilla gets marked)
 		(function(){
+			function burstAtElement(el){
+				const parent = document.querySelector('.embedded-game');
+				if(!parent || !el) return;
+				const parentRect = parent.getBoundingClientRect();
+				const rect = el.getBoundingClientRect();
+				const cx = rect.left + rect.width/2 - parentRect.left;
+				const cy = rect.top + rect.height/2 - parentRect.top;
+				const colors = ['255,210,60', '255,105,180', '110,200,255', '120,255,140'];
+				for(let i=0;i<12;i++){
+					const p = document.createElement('div');
+					p.className = 'mark-particle';
+					const angle = Math.random()*Math.PI*2;
+					const dist = 20 + Math.random()*45;
+					p.style.setProperty('--dx', Math.cos(angle)*dist+'px');
+					p.style.setProperty('--dy', Math.sin(angle)*dist+'px');
+					p.style.left = cx+'px';
+					p.style.top = cy+'px';
+					const size = 4 + Math.random()*5;
+					p.style.width = size+'px';
+					p.style.height = size+'px';
+					const color = colors[Math.floor(Math.random()*colors.length)];
+					p.style.background = `rgba(${color},${0.7+Math.random()*0.3})`;
+					parent.appendChild(p);
+					setTimeout(()=>p.remove(), 600);
+				}
+			}
+			window.burstAtElement = burstAtElement;
+		})();
+
+		// Scene overlay: fullscreen animated scenes per game event
+		(function(){
+			const GAME_ASSETS = '/resources/game/';
 			const overlay = document.getElementById('sceneOverlay');
 			const canvas = document.getElementById('sceneCanvas');
 			const ctx = canvas.getContext('2d');
+			const extras = document.getElementById('sceneExtras');
 			const sceneText = document.getElementById('sceneText');
 			const appRatio = document.querySelector('.app-ratio');
 
@@ -564,10 +727,11 @@
 
 			function rand(min,max){ return Math.random()*(max-min)+min }
 
-			function createParticles(color){
+			function createParticles(colors){
 				particles = [];
-				const count = 80;
+				const count = 110;
 				for(let i=0;i<count;i++){
+					const color = colors[Math.floor(Math.random()*colors.length)];
 					particles.push({
 						x: rand(0, canvas.width),
 						y: rand(0, canvas.height),
@@ -611,17 +775,111 @@
 				raf = null;
 			}
 
-			function showScene(action){
+			function addExtraImage(imgCfg){
+				const img = document.createElement('img');
+				img.src = imgCfg.src;
+				img.className = imgCfg.cls;
+				if(imgCfg.style){
+					const { vars, ...rest } = imgCfg.style;
+					Object.assign(img.style, rest);
+					if(vars) for(const k in vars) img.style.setProperty(k, vars[k]);
+				}
+				extras.appendChild(img);
+			}
+
+			function randomAnimalImages(n){
+				const pool = ['cat','dog','owl','monkey','panda','rabbit','dolphin','red-fox','koala'];
+				const out = [];
+				for(let i=0;i<n;i++){
+					const slug = pool[Math.floor(Math.random()*pool.length)];
+					out.push({
+						src: GAME_ASSETS + slug + '.png',
+						cls: 'pop-img',
+						style: {
+							left: (8 + Math.random()*72) + '%',
+							top: (14 + Math.random()*56) + '%',
+							animationDelay: (Math.random()*0.7) + 's'
+						}
+					});
+				}
+				return out;
+			}
+
+			function randomBalloonImages(n){
+				const out = [];
+				for(let i=0;i<n;i++){
+					out.push({
+						src: GAME_ASSETS + 'balloon.png',
+						cls: 'balloon-img',
+						style: {
+							left: (3 + Math.random()*90) + '%',
+							filter: 'hue-rotate(' + Math.floor(Math.random()*360) + 'deg) drop-shadow(0 8px 12px rgba(0,0,0,0.4))',
+							animationDelay: (Math.random()*1.4) + 's',
+							animationDuration: (3 + Math.random()*2) + 's',
+							vars: {
+								'--sway': (Math.random()*80 - 40) + 'px',
+								'--rot': (Math.random()*40 - 20) + 'deg'
+							}
+						}
+					});
+				}
+				return out;
+			}
+
+			// Per-game scene configuration: text, particle color palette, extra decorations
+			const GAME_SCENES = {
+				'Iniciar Juego 1': {
+					text: 'PRIMER JUEGO: LA COREOGRAFÍA',
+					colors: [{r:10,g:150,b:255},{r:255,g:255,b:255},{r:120,g:200,b:255}],
+					spotlights: true,
+					duration: 3200
+				},
+				'Iniciar Juego 2': {
+					text: 'SEGUNDO JUEGO: EL CORTEJO',
+					colors: [{r:10,g:200,b:120},{r:255,g:200,b:80}],
+					images: () => randomAnimalImages(5),
+					duration: 3400
+				},
+				'Iniciar Juego 3': {
+					text: 'TERCER JUEGO: LOS GLOBOS',
+					colors: [{r:241,g:107,b:252},{r:192,g:106,b:252},{r:252,g:106,b:187},{r:144,g:106,b:252},{r:252,g:108,b:106},{r:255,g:210,b:60}],
+					images: () => randomBalloonImages(14),
+					duration: 3800
+				},
+				'Iniciar Juego 4': {
+					text: 'CUARTO JUEGO: ¡CANTALA SI PUEDES!',
+					colors: [{r:200,g:120,b:240},{r:255,g:255,b:255}],
+					images: () => [{ src: GAME_ASSETS + 'karaoke-microphone.png', cls: 'mic-img' }],
+					waves: true,
+					duration: 3200
+				},
+				'Intento Fallido': {
+					text: 'INTENTO FALLIDO',
+					colors: [{r:180,g:30,b:30}],
+					images: () => [{ src: GAME_ASSETS + 'x-mark.png', cls: 'fail-img' }],
+					duration: 2400
+				}
+			};
+
+			function renderScene(cfg){
 				if(hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null }
-				const map = {
-					'Iniciar Juego 1': {text:'PRIMER JUEGO: LA COREOGRAFÍA', color:{r:10,g:150,b:255}},
-					'Iniciar Juego 2': {text:'SEGUNDO JUEGO: EL CORTEJO', color:{r:10,g:200,b:120}},
-					'Iniciar Juego 3': {text:'TERCER JUEGO: LOS GLOBOS', color:{r:240,g:90,b:90}},
-					'Iniciar Juego 4': {text:'CUARTO JUEGO: CANTALA SI PUEDES', color:{r:200,g:120,b:240}},
-					'Pareja Ganadora': {text:'PAREJA GANADORA', color:{r:255,g:200,b:40}},
-					'Intento Fallido': {text:'INTENTO FALLIDO', color:{r:180,g:30,b:30}}
-				};
-				const cfg = map[action] || {text:action.toUpperCase(), color:{r:255,g:255,b:255}};
+				extras.innerHTML = '';
+
+				if(cfg.spotlights){
+					['s1','s2','s3'].forEach(c=>{
+						const d = document.createElement('div');
+						d.className = 'spotlight ' + c;
+						extras.appendChild(d);
+					});
+				}
+				if(cfg.waves){
+					['w1','w2','w3'].forEach(c=>{
+						const d = document.createElement('div');
+						d.className = 'sound-wave ' + c;
+						extras.appendChild(d);
+					});
+				}
+				(typeof cfg.images === 'function' ? cfg.images() : (cfg.images || [])).forEach(addExtraImage);
 
 				if(appRatio) appRatio.style.filter = 'blur(6px)';
 
@@ -630,7 +888,7 @@
 				sceneText.textContent = cfg.text;
 				overlay.style.display = 'flex';
 
-				createParticles(cfg.color);
+				createParticles(cfg.colors);
 				start();
 
 				requestAnimationFrame(()=>{
@@ -643,12 +901,34 @@
 					sceneText.style.transform = 'scale(0.9)';
 					setTimeout(()=>{
 						overlay.style.display = 'none';
+						extras.innerHTML = '';
 						if(appRatio) appRatio.style.filter = '';
 					}, 400);
-				}, 2800);
+				}, cfg.duration || 2800);
+			}
+
+			function showScene(action){
+				const cfg = GAME_SCENES[action] || { text: action.toUpperCase(), colors: [{r:255,g:255,b:255}] };
+				renderScene(cfg);
+			}
+
+			function triggerWinnerScene(parejaIdx){
+				const fallback = 'Pareja ' + (parejaIdx + 1);
+				const name = (playerNames[parejaIdx] || fallback).trim() || fallback;
+				renderScene({
+					text: '¡' + name.toUpperCase() + ' GANADORA!',
+					colors: [{r:255,g:210,b:60},{r:255,g:105,b:180},{r:110,g:200,b:255},{r:120,g:255,b:140}],
+					images: () => [
+						{ src: GAME_ASSETS + 'trophy.png', cls: 'winner-img', style: { left: 'calc(50% - 60px)', top: '10%' } },
+						{ src: GAME_ASSETS + 'gold-medal.png', cls: 'winner-img', style: { left: 'calc(22% - 45px)', top: '58%', width: '90px', height: '90px', animationDelay: '0.15s' } },
+						{ src: GAME_ASSETS + 'party-popper.png', cls: 'winner-img', style: { left: 'calc(78% - 45px)', top: '58%', width: '90px', height: '90px', animationDelay: '0.3s' } }
+					],
+					duration: 3800
+				});
 			}
 
 			window.showScene = showScene;
+			window.triggerWinnerScene = triggerWinnerScene;
 		})();
 	</script>
 </body>

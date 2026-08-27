@@ -15,8 +15,20 @@ if ! command -v bun &> /dev/null; then
     export PATH="$HOME/.bun/bin:$PATH"
 fi
 
-# Start the Bun server
+# Stop any previous instance of this server before starting a new one
 PORT=${PORT:-3000}
+EXISTING_PID=$(lsof -ti tcp:"$PORT" 2>/dev/null || true)
+if [ -n "$EXISTING_PID" ]; then
+    echo "🛑 Found existing server on port $PORT (PID $EXISTING_PID). Stopping it..."
+    kill "$EXISTING_PID" 2>/dev/null || true
+    for i in {1..20}; do
+        kill -0 "$EXISTING_PID" 2>/dev/null || break
+        sleep 0.2
+    done
+    kill -9 "$EXISTING_PID" 2>/dev/null || true
+fi
+
+# Start the Bun server
 echo "🚀 Starting Bun server on port $PORT..."
 bun server.js &
 BUN_PID=$!

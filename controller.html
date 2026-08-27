@@ -3,61 +3,116 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Controller</title>
+	<title>Control - La Mezcla Perfecta</title>
 	<style>
-		:root{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-		body{padding:16px;color:#111}
-		h1{margin:0 0 12px 0}
-		.events-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:720px;margin-bottom:18px}
-		.events-grid button{padding:14px 10px;font-size:16px;border-radius:6px;border:1px solid #ccc;background:#fafafa;cursor:pointer}
-		.space-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:980px}
-		.space-grid button{padding:10px;font-size:14px;border-radius:6px;border:1px solid #999;background:#fff;cursor:pointer}
-		.space-grid button.active{background:#0b79ff;color:#fff;border-color:#075bb5}
-		#log{margin-top:12px;white-space:pre-wrap;max-width:980px}
+		:root{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;--accent:#8b5cf6}
+		*{box-sizing:border-box}
+		body{margin:0;padding:16px;color:#111;background:#f4f4f7;max-width:1080px}
+		h1{margin:0 0 4px 0;font-size:22px}
+		.subtitle{color:#666;margin:0 0 20px 0;font-size:13px}
+
+		.group{
+			background:#fff;border:1px solid #e2e2e8;border-radius:10px;
+			padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);
+		}
+		.group h2{
+			margin:0 0 12px 0;font-size:14px;text-transform:uppercase;letter-spacing:.04em;
+			color:var(--accent);display:flex;align-items:center;gap:8px;
+		}
+		.group h2 .n{
+			display:inline-flex;align-items:center;justify-content:center;
+			width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;
+			font-size:11px;font-weight:700;
+		}
+
+		.events-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+		.events-grid button{
+			padding:14px 8px;font-size:14px;font-weight:600;border-radius:8px;border:1px solid #ccc;
+			background:#fafafa;cursor:pointer;transition:transform .1s ease, background .15s ease;
+		}
+		.events-grid button:active{transform:scale(0.96)}
+		.events-grid button.juego{background:#eef2ff;border-color:#c7d2fe;color:#3730a3}
+		.events-grid button.fallo{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+
+		.hint{font-size:12px;color:#888;margin:8px 0 0 0}
+
+		.names-form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+		.name-field{display:flex;align-items:center;gap:8px}
+		.name-field .dot{width:12px;height:12px;border-radius:50%;flex:none}
+		.name-field input{flex:1;padding:9px 10px;border:1px solid #ccc;border-radius:6px;font-size:14px}
+		.names-form button{
+			grid-column:1/3;padding:10px;margin-top:4px;border-radius:8px;border:none;
+			background:var(--accent);color:#fff;font-weight:700;cursor:pointer;
+		}
+
+		.mark-table{width:100%;border-collapse:separate;border-spacing:6px}
+		.mark-table th{font-size:11px;color:#888;text-transform:uppercase;padding:2px 6px;text-align:center}
+		.mark-table th.pareja-col{text-align:left}
+		.mark-table td.pareja-col{
+			font-size:13px;font-weight:700;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+			border-left:5px solid transparent;
+		}
+		.mark-btn{
+			width:100%;padding:12px 4px;font-size:13px;border-radius:6px;border:1px solid #999;
+			background:#fff;cursor:pointer;
+		}
+		.mark-btn.active{background:#0b79ff;color:#fff;border-color:#075bb5;font-weight:700}
+
+		#log{
+			margin-top:4px;white-space:pre-wrap;max-width:100%;font-size:11px;color:#666;
+			background:#fafafa;border-radius:8px;padding:10px;max-height:140px;overflow-y:auto;
+		}
 	</style>
 </head>
 <body>
-	<h1>Control Backstage</h1>
+	<h1>🎛️ Control de Backstage</h1>
+	<p class="subtitle">La Mezcla Perfecta — panel para manejar la transmisión en vivo</p>
 
-	<section>
-		<h2>Quick Events</h2>
-		<div class="events-grid" id="quickEvents">
-			<!-- buttons added by JS -->
-		</div>
-	</section>
-
-	<section style="margin-top:18px">
-		<h2>Players</h2>
-		<form id="namesForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:980px;margin-bottom:12px">
-			<input id="p1" placeholder="Player 1" value="Pareja 1" style="flex:1;min-width:140px;padding:8px" />
-			<input id="p2" placeholder="Player 2" value="Pareja 2" style="flex:1;min-width:140px;padding:8px" />
-			<input id="p3" placeholder="Player 3" value="Pareja 3" style="flex:1;min-width:140px;padding:8px" />
-			<input id="p4" placeholder="Player 4" value="Pareja 4" style="flex:1;min-width:140px;padding:8px" />
-			<button type="submit" style="padding:10px 14px">Update Names</button>
+	<section class="group">
+		<h2><span class="n">1</span>Jugadores</h2>
+		<form id="namesForm" class="names-form">
+			<div class="name-field"><span class="dot" style="background:#6d28d9"></span><input id="p1" placeholder="Pareja 1" value="Pareja 1" /></div>
+			<div class="name-field"><span class="dot" style="background:#0d9488"></span><input id="p2" placeholder="Pareja 2" value="Pareja 2" /></div>
+			<div class="name-field"><span class="dot" style="background:#db2777"></span><input id="p3" placeholder="Pareja 3" value="Pareja 3" /></div>
+			<div class="name-field"><span class="dot" style="background:#ea580c"></span><input id="p4" placeholder="Pareja 4" value="Pareja 4" /></div>
+			<button type="submit">Actualizar nombres en pantalla</button>
 		</form>
 	</section>
 
-	<section style="margin-top:18px">
-		<h2>Marcar Espacios (5 x 4)</h2>
-		<div class="space-grid" id="spaceGrid">
-			<!-- 20 buttons -->
-		</div>
+	<section class="group">
+		<h2><span class="n">2</span>Escenas de Juego</h2>
+		<div class="events-grid" id="quickEvents"><!-- botones agregados por JS --></div>
+		<p class="hint">La escena de "Pareja Ganadora" ya no se dispara desde aquí: se activa sola cuando completás las 4 rondas de una pareja abajo.</p>
 	</section>
 
-	<pre id="log"></pre>
+	<section class="group">
+		<h2><span class="n">3</span>Marcar Espacios del Tablero</h2>
+		<p class="hint" style="margin:0 0 10px 0">Cada botón enciende el logo de esa pareja/ronda en la pantalla en vivo. Completar la fila de una pareja dispara su animación de victoria automáticamente.</p>
+		<table class="mark-table">
+			<thead>
+				<tr><th class="pareja-col">Pareja</th><th>Ronda 1</th><th>Ronda 2</th><th>Ronda 3</th><th>Ronda 4</th></tr>
+			</thead>
+			<tbody id="markTableBody"><!-- filas agregadas por JS --></tbody>
+		</table>
+	</section>
+
+	<section class="group">
+		<h2><span class="n">4</span>Registro de Eventos</h2>
+		<pre id="log"></pre>
+	</section>
 
 	<script>
 		const QUICK = [
-			'Iniciar Juego 1',
-			'Iniciar Juego 2',
-			'Iniciar Juego 3',
-			'Iniciar Juego 4',
-			'Pareja Ganadora',
-			'Intento Fallido'
+			{ label: 'Iniciar Juego 1: Coreografía', action: 'Iniciar Juego 1', cls: 'juego' },
+			{ label: 'Iniciar Juego 2: El Cortejo', action: 'Iniciar Juego 2', cls: 'juego' },
+			{ label: 'Iniciar Juego 3: Los Globos', action: 'Iniciar Juego 3', cls: 'juego' },
+			{ label: 'Iniciar Juego 4: Cantala si Puedes', action: 'Iniciar Juego 4', cls: 'juego' },
+			{ label: 'Intento Fallido', action: 'Intento Fallido', cls: 'fallo' }
 		];
 
+		const PAREJA_COLORS = ['#6d28d9', '#0d9488', '#db2777', '#ea580c'];
+
 		const quickEl = document.getElementById('quickEvents');
-		const spaceGrid = document.getElementById('spaceGrid');
 		const log = document.getElementById('log');
 
 		function logLine(s){ log.textContent = `${new Date().toLocaleTimeString()} - ${s}\n` + log.textContent }
@@ -65,56 +120,72 @@
 		async function sendEvent(payload){
 			try{
 				await fetch('/api/event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-				logLine('Sent: '+JSON.stringify(payload));
+				logLine('Enviado: '+JSON.stringify(payload));
 			}catch(e){ logLine('Error: '+e) }
 		}
 
-		// render quick event buttons
-		QUICK.forEach(label => {
+		// Quick event buttons
+		QUICK.forEach(({label, action, cls}) => {
 			const btn = document.createElement('button');
 			btn.textContent = label;
+			btn.className = cls;
 			btn.addEventListener('click', () => {
-				sendEvent({ type: 'control', action: label, ts: Date.now() });
+				sendEvent({ type: 'control', action, ts: Date.now() });
 			});
 			quickEl.appendChild(btn);
 		});
 
-		// render space buttons 5x4 (indices 0..19)
-		const SPACE_COUNT = 20;
-		const spaceState = new Array(SPACE_COUNT).fill(false);
-
-		function renderSpaces(){
-			spaceGrid.innerHTML = '';
-			for(let i=0;i<SPACE_COUNT;i++){
-				const btn = document.createElement('button');
-				btn.textContent = `Espacio ${i+1}`;
-				if(spaceState[i]) btn.classList.add('active');
-				btn.addEventListener('click', () => {
-					spaceState[i] = !spaceState[i];
-					if(spaceState[i]) btn.classList.add('active'); else btn.classList.remove('active');
-					sendEvent({ type: 'space', index: i, value: spaceState[i], ts: Date.now() });
-				});
-				spaceGrid.appendChild(btn);
-			}
-		}
-
-		renderSpaces();
-
-		// Names form handling
+		// Names form
 		const namesForm = document.getElementById('namesForm');
-		const p1 = document.getElementById('p1');
-		const p2 = document.getElementById('p2');
-		const p3 = document.getElementById('p3');
-		const p4 = document.getElementById('p4');
+		const nameInputs = [1,2,3,4].map(i => document.getElementById('p'+i));
+		let currentNames = nameInputs.map(el => el.value);
 
 		namesForm.addEventListener('submit', (e) => {
 			e.preventDefault();
-			const names = [p1.value || 'Pareja 1', p2.value || 'Pareja 2', p3.value || 'Pareja 3', p4.value || 'Pareja 4'];
-			sendEvent({ type: 'names', names, ts: Date.now() });
-			logLine('Updated names: '+JSON.stringify(names));
+			currentNames = nameInputs.map((el, i) => el.value || ('Pareja '+(i+1)));
+			sendEvent({ type: 'names', names: currentNames, ts: Date.now() });
+			logLine('Nombres actualizados: '+JSON.stringify(currentNames));
+			renderMarkTable();
 		});
+		nameInputs.forEach(el => el.addEventListener('input', () => {
+			currentNames = nameInputs.map((n, i) => n.value || ('Pareja '+(i+1)));
+			renderMarkTable();
+		}));
+
+		// Marcar Espacios: 4 parejas x 4 rondas, index matches the board's casilla order (0-15)
+		const markState = new Array(16).fill(false);
+		const markBody = document.getElementById('markTableBody');
+
+		function renderMarkTable(){
+			markBody.innerHTML = '';
+			for(let pareja = 0; pareja < 4; pareja++){
+				const tr = document.createElement('tr');
+
+				const nameTd = document.createElement('td');
+				nameTd.className = 'pareja-col';
+				nameTd.textContent = currentNames[pareja] || ('Pareja '+(pareja+1));
+				nameTd.style.borderLeftColor = PAREJA_COLORS[pareja];
+				tr.appendChild(nameTd);
+
+				for(let ronda = 0; ronda < 4; ronda++){
+					const idx = pareja*4 + ronda;
+					const td = document.createElement('td');
+					const btn = document.createElement('button');
+					btn.className = 'mark-btn' + (markState[idx] ? ' active' : '');
+					btn.textContent = 'Ronda ' + (ronda+1);
+					btn.addEventListener('click', () => {
+						markState[idx] = !markState[idx];
+						btn.classList.toggle('active', markState[idx]);
+						sendEvent({ type: 'space', index: idx, value: markState[idx], ts: Date.now() });
+					});
+					td.appendChild(btn);
+					tr.appendChild(td);
+				}
+				markBody.appendChild(tr);
+			}
+		}
+
+		renderMarkTable();
 	</script>
 </body>
 </html>
-
- 

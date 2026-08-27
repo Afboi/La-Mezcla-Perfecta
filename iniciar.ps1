@@ -31,6 +31,17 @@ if (-not (Has-Command 'bun')) {
 $env:PORT = $Port
 $base = "http://localhost:$Port"
 
+# Stop any previous instance already listening on this port before starting a new one
+$existingConn = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+if ($existingConn) {
+    foreach ($conn in $existingConn) {
+        $existingPid = $conn.OwningProcess
+        Write-Host "Found existing server on port $Port (PID $existingPid). Stopping it..."
+        Stop-Process -Id $existingPid -Force -ErrorAction SilentlyContinue
+    }
+    Start-Sleep -Milliseconds 500
+}
+
 Write-Host "Starting Bun server (background)..."
 $proc = Start-Process -FilePath "bun" -ArgumentList "server.js" -PassThru
 
@@ -46,7 +57,7 @@ for ($i = 0; $i -lt 50; $i++) {
 
 Write-Host "Opening controller and view in default browser..."
 Start-Process "$base/controller.html"
-Start-Process "$base/view.html"
+Start-Process "$base/index.html"
 
 Write-Host "Server running (PID: $($proc.Id)). Press Ctrl+C to stop."
 try {
