@@ -13,14 +13,12 @@ function contentTypeFor(path) {
 }
 
 async function serveStatic(pathname) {
-  const filePath = '.' + (pathname === '/' ? '/view.html' : pathname);
-  try {
-    const f = Bun.file(filePath);
-    const body = await f.text();
-    return new Response(body, { headers: { 'Content-Type': contentTypeFor(filePath) } });
-  } catch (err) {
-    return new Response('Not found', { status: 404 });
-  }
+  const filePath = '.' + (pathname === '/' ? '/index.html' : pathname);
+  const f = Bun.file(filePath);
+  if (!(await f.exists())) return new Response('Not found', { status: 404 });
+  // Serve the BunFile directly (streams raw bytes) instead of f.text(),
+  // which decodes as UTF-8 and corrupts binary files like PNG/JPG.
+  return new Response(f, { headers: { 'Content-Type': contentTypeFor(filePath) } });
 }
 
 Bun.serve({
