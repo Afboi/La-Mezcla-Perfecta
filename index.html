@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>View</title>
+	<style>
+		:root{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+		html,body{height:100%;margin:0}
+		/* Root split in three rows: top border, center app, bottom border */
+		.root{display:grid;grid-template-rows: auto 1fr auto; height:100vh}
+		/* compute border height using aspect ratio 1020:256 -> 256/1020 = 0.25098 of width */
+		.border{display:flex;align-items:center;justify-content:center;padding:8px;color:#fff;position:relative;overflow:hidden}
+		.border .text{opacity:0.95;position:relative;z-index:3}
+		/* players display in the top border */
+		.players{position:relative;z-index:3;font-weight:600;margin-right:12px}
+
+		/* Remove border gradient overlays; margins panels provide the visual gradients */
+		.center{display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto;background:#f3f4f6}
+
+		/* App wrapper keeps a 16:9 area centered and scaled down as needed */
+		.app-wrapper{ /* sized by layout JS for exact device dimensions */ position:relative;display:block }
+		.app{position:relative;width:100%;height:100%;}
+		/* 1536x1024 ratio box (66.6667% padding-top) */
+		.app-ratio{width:100%;padding-top:66.6667%;position:relative;background:#000;border-radius:6px;overflow:hidden;border:2px solid #ddd}
+		.app-inner{position:absolute;inset:0;display:flex;flex-direction:column}
+		.three-placeholders{display:flex;gap:8px;padding:8px;background:#111;color:#fff}
+		.ph{flex:1;background:#222;border-radius:6px;display:flex;align-items:center;justify-content:center;padding:12px}
+
+		.view-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:12px}
+		.cell{background:#fff;border:1px solid #ccc;padding:18px;border-radius:4px;text-align:center}
+		.cell.marked{background:#0b79ff;color:#fff;border-color:#075bb5}
+
+		/* small screens tweak */
+		@media (max-width:600px){ .three-placeholders{flex-direction:column} }
+
+		/* Safe-margin animated panels (top, bottom, left, right) */
+		:root{--margin-size:256px}
+		@media (max-width:1100px){ :root{--margin-size:64px} }
+
+		.margins-panel{position:fixed;pointer-events:none;z-index:0;overflow:hidden}
+		#marginLeft,#marginRight{top:0;bottom:0;width:var(--margin-size);}
+		#marginLeft{left:0}
+		#marginRight{right:0}
+		#marginTop,#marginBottom{left:0;right:0;height:var(--margin-size);}
+		#marginTop{top:0}
+		#marginBottom{bottom:0}
+
+		.margin-bg{position:absolute;inset:0;filter:blur(28px);opacity:0.95;background-repeat:repeat}
+
+		/* layered radial gradients using requested palette */
+		.margin-bg{background-image:
+			radial-gradient(circle at 10% 20%, #F16BFC 0%, rgba(241,107,252,0.85) 12%, transparent 30%),
+			radial-gradient(circle at 80% 30%, #C06AFC 0%, rgba(192,106,252,0.85) 12%, transparent 30%),
+			radial-gradient(circle at 50% 80%, #FC6ABB 0%, rgba(252,106,187,0.85) 12%, transparent 30%),
+			radial-gradient(circle at 20% 80%, #906AFC 0%, rgba(144,106,252,0.85) 12%, transparent 30%),
+			radial-gradient(circle at 85% 70%, #FC6C6A 0%, rgba(252,108,106,0.85) 12%, transparent 30%)
+		}
+
+		/* subtle grain */
+		.margin-bg::after{ content:'';position:absolute;inset:0;background-image:repeating-radial-gradient(circle at 20% 20%, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px);mix-blend-mode:overlay;opacity:0.06}
+
+		/* wavy motion via translate and background-position shifts */
+		@keyframes waveA{ 0%{transform:translateY(0) translateX(0)}50%{transform:translateY(30px) translateX(10px)}100%{transform:translateY(0) translateX(0)} }
+		@keyframes waveB{ 0%{transform:translateY(0) translateX(0)}50%{transform:translateY(-30px) translateX(-12px)}100%{transform:translateY(0) translateX(0)} }
+		@keyframes bgShift{ 0%{background-position:0% 0%}100%{background-position:200% 200%} }
+
+		#marginLeft .margin-bg{animation:waveA 2s ease-in-out infinite, bgShift 8s linear infinite}
+		#marginRight .margin-bg{animation:waveB 2.2s ease-in-out infinite, bgShift 9s linear reverse infinite}
+		#marginTop .margin-bg{animation:waveB 1.8s ease-in-out infinite, bgShift 7s linear infinite}
+		#marginBottom .margin-bg{animation:waveA 2.4s ease-in-out infinite, bgShift 8.5s linear reverse infinite}
+
+		/* ensure main root sits above margins */
+		.root{position:relative;z-index:2}
+	</style>
+	<style>
+		/* Namespaced styles for the inlined external game */
+		.embedded-game *{box-sizing:border-box}
+		.embedded-game, .embedded-game body{margin:0;padding:0;width:100%;height:100%;background-color:#080316;overflow:hidden}
+		.embedded-game .tablero{width:100%;height:100%;position:relative;background-image:url('/resources/Plantilla.jpg');background-size:contain;background-repeat:no-repeat;background-position:center center}
+		.embedded-game .zona-titulo{position:absolute;top:0;left:0;width:100%;height:20%;background:transparent;cursor:pointer;z-index:10}
+		.embedded-game .casilla{position:absolute;border:none;background:transparent;padding:0;margin:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+		.embedded-game .casilla img{width:75%;height:75%;object-fit:contain;opacity:0;transform:scale(0.7);transition:opacity .15s ease,transform .15s ease}
+		.embedded-game .casilla.activa img{opacity:1;transform:scale(1)}
+		.embedded-game .casilla.especial img{opacity:1;transform:scale(1)}
+		.embedded-game .fila1{top:30.8%;height:13.2%}
+		.embedded-game .fila2{top:47%;height:13.6%}
+		.embedded-game .fila3{top:63.1%;height:13.6%}
+		.embedded-game .fila4{top:79%;height:13.8%}
+		.embedded-game .ronda1{left:33.1%;width:10%}
+		.embedded-game .ronda2{left:44.4%;width:10%}
+		.embedded-game .ronda3{left:55.9%;width:10%}
+		.embedded-game .ronda4{left:67%;width:10%}
+		.embedded-game .total{left:78%;width:10%;cursor:default}
+		.embedded-game .numero-total{font-family:Arial,Helvetica,sans-serif;font-size:clamp(30px,4vw,70px);font-weight:bold;color:#000;line-height:1;user-select:none}
+	</style>
+</head>
+<body>
+
+	<!-- animated safe margins (behind the UI) -->
+	<div id="marginLeft" class="margins-panel"><div class="margin-bg"></div></div>
+	<div id="marginRight" class="margins-panel"><div class="margin-bg"></div></div>
+	<div id="marginTop" class="margins-panel"><div class="margin-bg"></div></div>
+	<div id="marginBottom" class="margins-panel"><div class="margin-bg"></div></div>
+	<div class="root">
+		<div class="border" id="topBorder"><div class="players" id="playersDisplay">Pareja 1 · Pareja 2 · Pareja 3 · Pareja 4</div><div class="text" id="statusText">Top border — live info</div></div>
+		<div class="center">
+			<div class="app-wrapper">
+				<div class="app">
+					<div class="app-ratio">
+						<div class="app-inner">
+							<!-- Inlined external app (merged) -->
+							<div class="embedded-game" style="flex:1;position:relative;overflow:hidden;background:#080316;min-height:0">
+								<div class="tablero" style="position:absolute;inset:0;width:100%;height:100%;background-image:url('/resources/Plantilla.jpg');background-size:contain;background-repeat:no-repeat;background-position:center center">
+									<div class="zona-titulo" id="zonaTitulo"></div>
+									<button class="casilla fila1 ronda1"><img src="/resources/Logo.png" alt="Punto"></button>
+									<button class="casilla fila1 ronda2"><img src="/resources/Logo.png" alt="Punto"></button>
+									<button class="casilla fila1 ronda3"><img src="/resources/Logo.png" alt="Punto"></button>
+									<button class="casilla fila1 ronda4"><img src="/resources/Logo.png" alt="Punto"></button>
+									<div class="casilla fila1 total"><span class="numero-total" id="total1">0</span></div>
+									<button class="casilla fila2 ronda1"><img src="/resources/Logo.png" alt="Punto"></button>
+									<button class="casilla fila2 ronda2"><img src="/resources/Logo.png" alt="Punto"></button>
+									<button class="casilla fila2 ronda3"><img src="/resources/Logo.png" alt="Punto"></button>
+									<button class="casilla fila2 ronda4"><img src="/resources/Logo.png" alt="Punto"></button>
+									<div class="casilla fila2 total"><span class="numero-total" id="total2">0</span></div>
+									<button class="casilla fila3 ronda1"><img src="/resources/Logo.png" alt="Punto"></button>
+									<button class="casilla fila3 ronda2"><img src="/resources/Logo.png" alt="Punto"></button>
+									<button class="casilla fila3 ronda3"><img src="/resources/Logo.png" alt="Punto"></button>
+									<button class="casilla fila3 ronda4"><img src="/resources/Logo.png" alt="Punto"></button>
+									<div class="casilla fila3 total"><span class="numero-total" id="total3">0</span></div>
+									<button class="casilla fila4 ronda1"><img src="/resources/Logo.png" alt="Punto"></button>
+									<button class="casilla fila4 ronda2"><img src="/resources/Logo.png" alt="Punto"></button>
+									<button class="casilla fila4 ronda3"><img src="/resources/Logo.png" alt="Punto"></button>
+									<button class="casilla fila4 ronda4"><img src="/resources/Logo.png" alt="Punto"></button>
+									<div class="casilla fila4 total"><span class="numero-total" id="total4">0</span></div>
+								</div>
+							</div>
+							<!-- Top area for threejs placeholders -->
+							<div class="three-placeholders" id="placeholders">
+								<div class="ph">ThreeJS Placeholder 1</div>
+								<div class="ph">ThreeJS Placeholder 2</div>
+								<div class="ph">ThreeJS Placeholder 3</div>
+							</div>
+
+							<!-- Main content area: for now show the grid below the placeholders -->
+							<div style="flex:1;overflow:auto;padding:8px;background:transparent;">
+								<div style="color:#222;margin-bottom:6px">Spaces (5 x 4)</div>
+								<div class="view-grid" id="viewGrid">
+									<!-- cells rendered by JS -->
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="border" id="bottomBorder"><div class="text">Bottom border — status</div></div>
+	</div>
+
+	<!-- Fullscreen scene overlay for control events -->
+	<div id="sceneOverlay" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;">
+		<div id="sceneBackdrop" style="position:absolute;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);"></div>
+		<canvas id="sceneCanvas" width="800" height="600" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
+		<div id="sceneContent" style="position:relative;display:flex;align-items:center;justify-content:center;inset:0;padding:20px">
+			<div id="sceneText" style="color:#fff;font-weight:700;text-align:center;font-size:clamp(32px,8vw,160px);text-shadow:0 6px 18px rgba(0,0,0,0.6);opacity:0;transform:scale(0.9);transition:opacity 400ms ease,transform 600ms cubic-bezier(.22,.9,.3,1)"></div>
+		</div>
+	</div>
+
+	<script>
+	// layout the virtual device: center app 1536x1024 with fixed 256px side panels and fixed 256px top/bottom padding
+		(function(){
+		const APP_W = 1536, APP_H = 1024, SIDE_W = 256, TOP_H = 256, MAX_SCALE = 1.5;
+		const appWrapper = document.querySelector('.app-wrapper');
+		const marginLeft = document.getElementById('marginLeft');
+		const marginRight = document.getElementById('marginRight');
+		const marginTop = document.getElementById('marginTop');
+		const marginBottom = document.getElementById('marginBottom');
+
+		function layoutDevice(){
+			const availW = window.innerWidth;
+			const availH = window.innerHeight;
+			// compute maximum app size inside the fixed side/top/bottom panels
+			const maxAppW = Math.max(0, availW - 2 * SIDE_W);
+			const maxAppH = Math.max(0, availH - 2 * TOP_H);
+			let scale = Math.min(maxAppW / APP_W, maxAppH / APP_H);
+			if (!isFinite(scale) || scale <= 0) scale = 1;
+			if (scale > MAX_SCALE) scale = MAX_SCALE; // allow some upscaling to make the app larger on big displays
+
+			// set appWrapper base size and transform
+			appWrapper.style.width = APP_W + 'px';
+			appWrapper.style.height = APP_H + 'px';
+			appWrapper.style.transformOrigin = 'center center';
+			appWrapper.style.transform = `scale(${scale})`;
+
+			const scaledW = APP_W * scale;
+			const scaledH = APP_H * scale;
+			// centered position for scaled app
+			const centerLeft = Math.max(0, (availW - scaledW) / 2);
+			const centerTop = Math.max(0, (availH - scaledH) / 2);
+
+			// position fixed-width side panels adjacent to the scaled app
+			marginLeft.style.width = SIDE_W + 'px';
+			marginLeft.style.height = scaledH + 'px';
+			marginLeft.style.left = (centerLeft - SIDE_W) + 'px';
+			marginLeft.style.top = centerTop + 'px';
+
+			marginRight.style.width = SIDE_W + 'px';
+			marginRight.style.height = scaledH + 'px';
+			marginRight.style.left = (centerLeft + scaledW) + 'px';
+			marginRight.style.top = centerTop + 'px';
+
+			// position top/bottom padding panels with fixed height TOP_H
+			if(marginTop){
+				marginTop.style.height = TOP_H + 'px';
+				marginTop.style.left = (centerLeft - SIDE_W) + 'px';
+				marginTop.style.width = (scaledW + SIDE_W*2) + 'px';
+				marginTop.style.top = (centerTop - TOP_H) + 'px';
+			}
+			if(marginBottom){
+				marginBottom.style.height = TOP_H + 'px';
+				marginBottom.style.left = (centerLeft - SIDE_W) + 'px';
+				marginBottom.style.width = (scaledW + SIDE_W*2) + 'px';
+				marginBottom.style.top = (centerTop + scaledH) + 'px';
+			}
+		}
+
+		window.addEventListener('resize', layoutDevice);
+		window.addEventListener('DOMContentLoaded', layoutDevice);
+		setTimeout(layoutDevice, 50);
+	})();
+		const viewGrid = document.getElementById('viewGrid');
+		const topBorder = document.getElementById('topBorder');
+		const bottomBorder = document.getElementById('bottomBorder');
+
+		const SPACE_COUNT = 20;
+		const spaces = new Array(SPACE_COUNT).fill(false);
+
+		function renderGrid(){
+			viewGrid.innerHTML = '';
+			for(let i=0;i<SPACE_COUNT;i++){
+				const div = document.createElement('div');
+				div.className = 'cell' + (spaces[i] ? ' marked' : '');
+				div.textContent = spaces[i] ? `Marked ${i+1}` : `Espacio ${i+1}`;
+				viewGrid.appendChild(div);
+			}
+		}
+
+		renderGrid();
+
+		const outLog = (t)=>{ topBorder.querySelector('.text').textContent = t; }
+
+		// Player names state
+		let playerNames = ['Pareja 1','Pareja 2','Pareja 3','Pareja 4'];
+
+		function renderPlayers(){
+			const el = document.getElementById('playersDisplay');
+			if(!el) return;
+			el.textContent = playerNames.join(' · ');
+		}
+
+		renderPlayers();
+
+		// Embedded game integration (inlined La-Mezcla-Perfecta)
+		(function(){
+			const container = document.querySelector('.embedded-game');
+			if(!container) return;
+			const casillas = Array.from(container.querySelectorAll('.casilla:not(.total)'));
+			let modoLogo2 = false;
+			const zonaTitulo = container.querySelector('#zonaTitulo');
+			if(zonaTitulo){ zonaTitulo.addEventListener('click', ()=>{ modoLogo2 = !modoLogo2; console.log(modoLogo2? 'Modo logo x2 ACTIVADO' : 'Modo logo x2 DESACTIVADO'); }); }
+
+			casillas.forEach((casilla, idx) => {
+				casilla.addEventListener('click', ()=>{
+					if(modoLogo2){
+						if(casilla.classList.contains('ronda4')){
+							const imagen = casilla.querySelector('img');
+							if(casilla.classList.contains('especial')){
+								imagen.src = '/resources/Logo.png'; imagen.alt='Punto';
+								casilla.classList.remove('especial','activa');
+							} else {
+								imagen.src = '/resources/Logo2.png'; imagen.alt='2 puntos';
+								casilla.classList.add('especial','activa');
+							}
+							actualizarTotales();
+						}
+						return;
+					}
+					casilla.classList.toggle('activa');
+					if(!casilla.classList.contains('activa') && casilla.classList.contains('especial')){
+						const imagen = casilla.querySelector('img'); imagen.src = '/resources/Logo.png'; imagen.alt='Punto'; casilla.classList.remove('especial');
+					}
+					actualizarTotales();
+				});
+			});
+
+			function actualizarTotales(){
+				for(let pareja=1; pareja<=4; pareja++){
+					const fila = Array.from(container.querySelectorAll('.fila'+pareja+':not(.total)'));
+					let puntos = 0;
+					fila.forEach(c=>{ if(c.classList.contains('activa')){ puntos += c.classList.contains('especial')?2:1; } });
+					const el = container.querySelector('#total'+pareja);
+					if(el) el.textContent = puntos;
+				}
+			}
+
+			document.addEventListener('keydown', (event)=>{ if(event.key === 'Escape'){ casillas.forEach(c=>{ c.classList.remove('activa','especial'); const imagen = c.querySelector('img'); if(imagen){ imagen.src = '/resources/Logo.png'; imagen.alt='Punto'; } }); modoLogo2 = false; actualizarTotales(); } });
+
+			// Expose a function to update a casilla by index from external events
+			window.setEmbeddedSpace = function(idx, value){ const c = casillas[idx]; if(!c) return; if(value){ c.classList.add('activa'); } else { c.classList.remove('activa'); c.classList.remove('especial'); const imagen = c.querySelector('img'); if(imagen){ imagen.src = '/resources/Logo.png'; imagen.alt='Punto'; } } actualizarTotales(); };
+		})();
+
+		const es = new EventSource('/events');
+		es.onopen = () => { outLog('Connected to events'); };
+		es.onmessage = (e) => {
+			try{
+				const data = JSON.parse(e.data);
+				if(data.type === 'control'){
+					// show control action briefly in top border
+					outLog(`${data.action} — ${new Date(data.ts).toLocaleTimeString()}`);
+					// trigger fullscreen scene animation if available
+					if (typeof window.showScene === 'function') window.showScene(data.action);
+				} else if (data.type === 'names'){
+					// update player names
+					if(Array.isArray(data.names)){
+						playerNames = data.names.map(n => String(n || '').trim() || '');
+						renderPlayers();
+					}
+				} else if (data.type === 'space'){
+					const idx = Number(data.index);
+					spaces[idx] = !!data.value;
+					renderGrid();
+					if(typeof window.setEmbeddedSpace === 'function'){
+						try{ window.setEmbeddedSpace(idx, !!data.value); }catch(e){ console.warn('setEmbeddedSpace failed',e); }
+					}
+				} else if(data.type === 'names'){
+					// generic message
+					bottomBorder.querySelector('.text').textContent = JSON.stringify(data);
+				}
+			}catch(err){ bottomBorder.querySelector('.text').textContent = 'Invalid event: '+e.data }
+		};
+		es.onerror = ()=>{ outLog('EventSource error'); };
+	</script>
+	<script>
+		// Scene overlay logic: big text + particles + blur
+		(function(){
+			const overlay = document.getElementById('sceneOverlay');
+			const canvas = document.getElementById('sceneCanvas');
+			const ctx = canvas.getContext('2d');
+			const sceneText = document.getElementById('sceneText');
+			const appRatio = document.querySelector('.app-ratio');
+
+			let raf = null;
+			let particles = [];
+			let running = false;
+			let hideTimeout = null;
+
+			function fitCanvas(){
+				const dpr = window.devicePixelRatio || 1;
+				canvas.width = Math.max(1, Math.floor(canvas.clientWidth * dpr));
+				canvas.height = Math.max(1, Math.floor(canvas.clientHeight * dpr));
+				ctx.setTransform(dpr,0,0,dpr,0,0);
+			}
+			window.addEventListener('resize', fitCanvas);
+			fitCanvas();
+
+			function rand(min,max){ return Math.random()*(max-min)+min }
+
+			function createParticles(color){
+				particles = [];
+				const count = 80;
+				for(let i=0;i<count;i++){
+					particles.push({
+						x: rand(0, canvas.width),
+						y: rand(0, canvas.height),
+						vx: rand(-0.6,0.6),
+						vy: rand(-1.5,-0.2),
+						r: rand(1,4),
+						life: rand(120,280),
+						age: 0,
+						color
+					});
+				}
+			}
+
+			function draw(){
+				ctx.clearRect(0,0,canvas.width,canvas.height);
+				for(let p of particles){
+					p.age++;
+					p.x += p.vx * 2;
+					p.y += p.vy * 2 - (p.age/200);
+					const alpha = Math.max(0, 1 - p.age / p.life);
+					ctx.beginPath();
+					ctx.fillStyle = `rgba(${p.color.r},${p.color.g},${p.color.b},${alpha})`;
+					ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+					ctx.fill();
+				}
+				particles = particles.filter(p => p.age < p.life);
+				if(particles.length === 0) stop();
+				else raf = requestAnimationFrame(draw);
+			}
+
+			function start(){
+				if(running) return;
+				running = true;
+				fitCanvas();
+				raf = requestAnimationFrame(draw);
+			}
+
+			function stop(){
+				running = false;
+				if(raf) cancelAnimationFrame(raf);
+				raf = null;
+			}
+
+			function showScene(action){
+				// Cancel any existing hide
+				if(hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null }
+				// map action -> color and text
+				const map = {
+					'Iniciar Juego 1': {text:'PRIMER JUEGO: LA COREOGRAFÍA', color:{r:10,g:150,b:255}},
+					'Iniciar Juego 2': {text:'SEGUNDO JUEGO: EL CORTEJO', color:{r:10,g:200,b:120}},
+					'Iniciar Juego 3': {text:'TERCER JUEGO: LOS GLOBOS', color:{r:240,g:90,b:90}},
+					'Iniciar Juego 4': {text:'CUARTO JUEGO: CANTALA SI PUEDES', color:{r:200,g:120,b:240}},
+					'Pareja Ganadora': {text:'PAREJA GANADORA', color:{r:255,g:200,b:40}},
+					'Intento Fallido': {text:'INTENTO FALLIDO', color:{r:180,g:30,b:30}}
+				};
+				const cfg = map[action] || {text:action.toUpperCase(), color:{r:255,g:255,b:255}};
+
+				// blur the app area (fallback if backdrop-filter unsupported)
+				if(appRatio) appRatio.style.filter = 'blur(6px)';
+
+				sceneText.style.opacity = '0';
+				sceneText.style.transform = 'scale(0.9)';
+				sceneText.textContent = cfg.text;
+				overlay.style.display = 'flex';
+
+				createParticles(cfg.color);
+				start();
+
+				// small delay to trigger CSS transition
+				requestAnimationFrame(()=>{
+					sceneText.style.opacity = '1';
+					sceneText.style.transform = 'scale(1)';
+				});
+
+				// hide after 2.8s
+				hideTimeout = setTimeout(()=>{
+					sceneText.style.opacity = '0';
+					sceneText.style.transform = 'scale(0.9)';
+					// fade out particles by clearing and stopping after a short delay
+					setTimeout(()=>{
+						overlay.style.display = 'none';
+						if(appRatio) appRatio.style.filter = '';
+						stop();
+						particles = [];
+					}, 500);
+				}, 2800);
+			}
+
+			// expose showScene to global scope so other code can call it
+			window.showScene = showScene;
+		})();
+	</script>
+</body>
+</html>
+

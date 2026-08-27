@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Controller</title>
+	<style>
+		:root{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+		body{padding:16px;color:#111}
+		h1{margin:0 0 12px 0}
+		.events-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:720px;margin-bottom:18px}
+		.events-grid button{padding:14px 10px;font-size:16px;border-radius:6px;border:1px solid #ccc;background:#fafafa;cursor:pointer}
+		.space-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:980px}
+		.space-grid button{padding:10px;font-size:14px;border-radius:6px;border:1px solid #999;background:#fff;cursor:pointer}
+		.space-grid button.active{background:#0b79ff;color:#fff;border-color:#075bb5}
+		#log{margin-top:12px;white-space:pre-wrap;max-width:980px}
+	</style>
+</head>
+<body>
+	<h1>Control Backstage</h1>
+
+	<section>
+		<h2>Quick Events</h2>
+		<div class="events-grid" id="quickEvents">
+			<!-- buttons added by JS -->
+		</div>
+	</section>
+
+	<section style="margin-top:18px">
+		<h2>Players</h2>
+		<form id="namesForm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:980px;margin-bottom:12px">
+			<input id="p1" placeholder="Player 1" value="Pareja 1" style="flex:1;min-width:140px;padding:8px" />
+			<input id="p2" placeholder="Player 2" value="Pareja 2" style="flex:1;min-width:140px;padding:8px" />
+			<input id="p3" placeholder="Player 3" value="Pareja 3" style="flex:1;min-width:140px;padding:8px" />
+			<input id="p4" placeholder="Player 4" value="Pareja 4" style="flex:1;min-width:140px;padding:8px" />
+			<button type="submit" style="padding:10px 14px">Update Names</button>
+		</form>
+	</section>
+
+	<section style="margin-top:18px">
+		<h2>Marcar Espacios (5 x 4)</h2>
+		<div class="space-grid" id="spaceGrid">
+			<!-- 20 buttons -->
+		</div>
+	</section>
+
+	<pre id="log"></pre>
+
+	<script>
+		const QUICK = [
+			'Iniciar Juego 1',
+			'Iniciar Juego 2',
+			'Iniciar Juego 3',
+			'Iniciar Juego 4',
+			'Pareja Ganadora',
+			'Intento Fallido'
+		];
+
+		const quickEl = document.getElementById('quickEvents');
+		const spaceGrid = document.getElementById('spaceGrid');
+		const log = document.getElementById('log');
+
+		function logLine(s){ log.textContent = `${new Date().toLocaleTimeString()} - ${s}\n` + log.textContent }
+
+		async function sendEvent(payload){
+			try{
+				await fetch('/api/event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+				logLine('Sent: '+JSON.stringify(payload));
+			}catch(e){ logLine('Error: '+e) }
+		}
+
+		// render quick event buttons
+		QUICK.forEach(label => {
+			const btn = document.createElement('button');
+			btn.textContent = label;
+			btn.addEventListener('click', () => {
+				sendEvent({ type: 'control', action: label, ts: Date.now() });
+			});
+			quickEl.appendChild(btn);
+		});
+
+		// render space buttons 5x4 (indices 0..19)
+		const SPACE_COUNT = 20;
+		const spaceState = new Array(SPACE_COUNT).fill(false);
+
+		function renderSpaces(){
+			spaceGrid.innerHTML = '';
+			for(let i=0;i<SPACE_COUNT;i++){
+				const btn = document.createElement('button');
+				btn.textContent = `Espacio ${i+1}`;
+				if(spaceState[i]) btn.classList.add('active');
+				btn.addEventListener('click', () => {
+					spaceState[i] = !spaceState[i];
+					if(spaceState[i]) btn.classList.add('active'); else btn.classList.remove('active');
+					sendEvent({ type: 'space', index: i, value: spaceState[i], ts: Date.now() });
+				});
+				spaceGrid.appendChild(btn);
+			}
+		}
+
+		renderSpaces();
+
+		// Names form handling
+		const namesForm = document.getElementById('namesForm');
+		const p1 = document.getElementById('p1');
+		const p2 = document.getElementById('p2');
+		const p3 = document.getElementById('p3');
+		const p4 = document.getElementById('p4');
+
+		namesForm.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const names = [p1.value || 'Pareja 1', p2.value || 'Pareja 2', p3.value || 'Pareja 3', p4.value || 'Pareja 4'];
+			sendEvent({ type: 'names', names, ts: Date.now() });
+			logLine('Updated names: '+JSON.stringify(names));
+		});
+	</script>
+</body>
+</html>
+
+ 
