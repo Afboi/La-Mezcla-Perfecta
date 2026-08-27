@@ -1,869 +1,970 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-
 <head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>La Mezcla Perfecta</title>
-
-
-    <style>
-
-        /* =========================================
-           CONFIGURACIÓN GENERAL
-        ========================================= */
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-
-            margin: 0;
-            padding: 0;
-
-            width: 100%;
-            height: 100%;
-
-            background-color: #080316;
-
-            overflow: hidden;
-        }
-
-
-        /* =========================================
-           TABLERO
-        ========================================= */
-
-        .tablero {
-
-            width: 100vw;
-            height: 100vh;
-
-            position: relative;
-
-            background-image: url("plantilla.jpg");
-
-            background-size: contain;
-
-            background-repeat: no-repeat;
-
-            background-position: center center;
-        }
-
-
-        /* =========================================
-           ZONA INVISIBLE DEL TÍTULO
-        ========================================= */
-
-        .zona-titulo {
-
-            position: absolute;
-
-            top: 0%;
-            left: 0%;
-
-            width: 100%;
-            height: 20%;
-
-            background: transparent;
-
-            cursor: pointer;
-
-            z-index: 10;
-        }
-
-
-        /* =========================================
-           CASILLAS
-        ========================================= */
-
-        .casilla {
-
-            position: absolute;
-
-            border: none;
-
-            background: transparent;
-
-            padding: 0;
-
-            margin: 0;
-
-            cursor: pointer;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-        }
-
-
-        /* =========================================
-           IMAGEN / LOGO
-        ========================================= */
-
-        .casilla img {
-
-            width: 75%;
-
-            height: 75%;
-
-            object-fit: contain;
-
-            opacity: 0;
-
-            transform: scale(0.7);
-
-            transition:
-
-                opacity 0.15s ease,
-
-                transform 0.15s ease;
-        }
-
-
-        /* =========================================
-           CUANDO SE ACTIVA LA CASILLA
-        ========================================= */
-
-        .casilla.activa img {
-
-            opacity: 1;
-
-            transform: scale(1);
-        }
-
-
-        /* =========================================
-           LOGO ESPECIAL x2
-        ========================================= */
-
-        .casilla.especial img {
-
-            opacity: 1;
-
-            transform: scale(1);
-        }
-
-
-        /* =========================================
-           FILAS
-        ========================================= */
-
-        .fila1 {
-
-            top: 30.8%;
-
-            height: 13.2%;
-        }
-
-
-        .fila2 {
-
-            top: 47%;
-
-            height: 13.6%;
-        }
-
-
-        .fila3 {
-
-            top: 63.1%;
-
-            height: 13.6%;
-        }
-
-
-        .fila4 {
-
-            top: 79%;
-
-            height: 13.8%;
-        }
-
-
-        /* =========================================
-           COLUMNAS
-        ========================================= */
-
-        .ronda1 {
-
-            left: 33.1%;
-
-            width: 10%;
-        }
-
-
-        .ronda2 {
-
-            left: 44.4%;
-
-            width: 10%;
-        }
-
-
-        .ronda3 {
-
-            left: 55.9%;
-
-            width: 10%;
-        }
-
-
-        .ronda4 {
-
-            left: 67%;
-
-            width: 10%;
-        }
-
-
-        /* =========================================
-           TOTAL
-        ========================================= */
-
-        .total {
-
-            left: 78%;
-
-            width: 10%;
-
-            cursor: default;
-        }
-
-
-        .numero-total {
-
-            font-family: Arial, Helvetica, sans-serif;
-
-            font-size: clamp(30px, 4vw, 70px);
-
-            font-weight: bold;
-
-            color: #000;
-
-            line-height: 1;
-
-            user-select: none;
-        }
-
-
-    </style>
-
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>La Mezcla Perfecta - Live View</title>
+	<style>
+		* { box-sizing: border-box; }
+		html, body {
+			width: 100%;
+			height: 100%;
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+
+		/* Main grid layout: 3 columns (side margins sized by aspect-ratio, not px), single row (no footer) */
+		body {
+			display: grid;
+			grid-template-columns: auto 1fr auto;
+			grid-template-rows: 1fr;
+			gap: 0;
+		}
+
+		/* Gradient margins fill the background */
+		body::before {
+			content: '';
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			z-index: -1;
+			background-image:
+				radial-gradient(circle at 10% 20%, #F16BFC 0%, rgba(241,107,252,0.85) 12%, transparent 30%),
+				radial-gradient(circle at 80% 30%, #C06AFC 0%, rgba(192,106,252,0.85) 12%, transparent 30%),
+				radial-gradient(circle at 50% 80%, #FC6ABB 0%, rgba(252,106,187,0.85) 12%, transparent 30%),
+				radial-gradient(circle at 20% 80%, #906AFC 0%, rgba(144,106,252,0.85) 12%, transparent 30%),
+				radial-gradient(circle at 85% 70%, #FC6C6A 0%, rgba(252,108,106,0.85) 12%, transparent 30%);
+			background-color: #1a0a2e;
+			background-size: 130% 130%;
+			filter: blur(28px);
+			opacity: 0.95;
+			animation: bgPan 10s ease-in-out infinite alternate;
+		}
+
+		@keyframes bgPan {
+			0%{background-position:0% 0%}
+			100%{background-position:30% 30%}
+		}
+
+		/* Grain texture overlay */
+		body::after {
+			content: '';
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			z-index: -1;
+			background-image: repeating-radial-gradient(circle at 20% 20%, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px);
+			mix-blend-mode: overlay;
+			opacity: 0.06;
+			animation: bgShift 8s linear infinite;
+		}
+
+		@keyframes bgShift {
+			0%{background-position:0% 0%}
+			100%{background-position:200% 200%}
+		}
+
+		/* Side margins: width is derived from height via aspect-ratio (256:1024 = 1:4),
+		   NOT a fixed pixel value, so they scale down together with the stage on smaller screens. */
+		#marginLeft, #marginRight {
+			grid-row: 1;
+			height: 100%;
+			aspect-ratio: 256 / 1024;
+			background: transparent;
+			z-index: 1;
+			min-width: 0;
+		}
+		#marginLeft { grid-column: 1; }
+		#marginRight { grid-column: 3; }
+
+		/* Center app area (row 1, fills remaining width) */
+		#appContainer {
+			grid-column: 2;
+			grid-row: 1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 0;
+			background: transparent;
+			z-index: 2;
+			min-width: 0;
+			min-height: 0;
+			overflow: hidden;
+		}
+
+		/* Small connection-status dot, replaces the old footer entirely */
+		#statusDot {
+			position: fixed;
+			right: 10px;
+			bottom: 10px;
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			background: #999;
+			box-shadow: 0 0 6px rgba(0,0,0,0.5);
+			z-index: 50;
+			transition: background 0.3s ease;
+		}
+		#statusDot.ok { background: #2ecc71; }
+		#statusDot.err { background: #e74c3c; }
+
+		/* App wrapper: 16:9 box, size is set explicitly in px by JS (layoutStage()) so it always
+		   fits inside #appContainer without being clipped or collapsing to 0 in a flex parent. */
+		.app-ratio {
+			position: relative;
+			background: #000;
+			border-radius: 8px;
+			overflow: hidden;
+			box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+			flex: none;
+		}
+
+		.app-inner {
+			position: absolute;
+			inset: 0;
+			display: flex;
+			flex-direction: column;
+			background: #080316;
+		}
+
+		/* Game board */
+		.embedded-game {
+			flex: 1;
+			position: relative;
+			overflow: hidden;
+			background: #080316;
+			min-height: 0;
+		}
+
+		.tablero {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			background-image: url('/resources/Plantilla.jpg');
+			background-size: contain;
+			background-repeat: no-repeat;
+			background-position: center center;
+		}
+
+		.zona-titulo {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 20%;
+			background: transparent;
+			cursor: pointer;
+			z-index: 10;
+		}
+
+		.casilla {
+			position: absolute;
+			border: none;
+			background: transparent;
+			padding: 0;
+			margin: 0;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.casilla img {
+			width: 75%;
+			height: 75%;
+			object-fit: contain;
+			opacity: 0;
+			transform: scale(0.7);
+			transition: opacity 0.15s ease, transform 0.15s ease;
+		}
+
+		.casilla.activa img {
+			opacity: 1;
+			transform: scale(1);
+		}
+
+		.casilla.especial img {
+			opacity: 1;
+			transform: scale(1);
+		}
+
+		/* Row/column percentages measured directly from Plantilla.jpg's white cell
+		   boundaries (pixel-scanned), not eyeballed — the old values were off by
+		   3-4% on every column, which is why logos/totals rendered shifted left. */
+		.fila1 { top: 30.19%; height: 14.91%; }
+		.fila2 { top: 45.74%; height: 15.46%; }
+		.fila3 { top: 61.85%; height: 15.56%; }
+		.fila4 { top: 78.06%; height: 15.74%; }
+
+		.ronda1 { left: 30.10%; width: 12.45%; }
+		.ronda2 { left: 42.97%; width: 12.86%; }
+		.ronda3 { left: 56.25%; width: 12.45%; }
+		.ronda4 { left: 69.11%; width: 12.19%; }
+
+		.total { left: 82.03%; width: 11.20%; cursor: default; }
+
+		/* Player names are kept in memory only (used by round/podium scene text) —
+		   they are intentionally never drawn onto the board itself. */
+
+		.numero-total {
+			font-family: Arial, Helvetica, sans-serif;
+			font-size: clamp(24px, 3vw, 60px);
+			font-weight: bold;
+			color: #000;
+			line-height: 1;
+			user-select: none;
+		}
+
+		/* Local particle burst where a casilla gets marked */
+		.mark-particle {
+			position: absolute;
+			border-radius: 50%;
+			pointer-events: none;
+			z-index: 20;
+			animation: markBurst 550ms ease-out forwards;
+		}
+		@keyframes markBurst {
+			0% { transform: translate(0,0) scale(1); opacity: 1; }
+			100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+		}
+
+		/* Extra decorations layered inside the fullscreen scene overlay */
+		#sceneExtras {
+			position: absolute;
+			inset: 0;
+			z-index: 2;
+			pointer-events: none;
+			overflow: hidden;
+		}
+
+		/* Coreografía: sweeping spotlight beams */
+		.spotlight {
+			position: absolute;
+			top: -20%;
+			width: 40%;
+			height: 140%;
+			background: linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 70%);
+			clip-path: polygon(48% 0, 52% 0, 100% 100%, 0% 100%);
+			animation: sweep 3.2s ease-in-out infinite;
+			mix-blend-mode: screen;
+		}
+		.spotlight.s1 { left: -10%; animation-delay: 0s; }
+		.spotlight.s2 { left: 30%; animation-delay: -1.1s; background: linear-gradient(180deg, rgba(120,200,255,0.35), rgba(120,200,255,0) 70%); }
+		.spotlight.s3 { left: 70%; animation-delay: -2.2s; background: linear-gradient(180deg, rgba(255,120,220,0.35), rgba(255,120,220,0) 70%); }
+		@keyframes sweep {
+			0%, 100% { transform: rotate(-22deg); }
+			50% { transform: rotate(22deg); }
+		}
+
+		/* Cortejo: animals popping in */
+		.pop-img {
+			position: absolute;
+			width: 150px;
+			height: 150px;
+			object-fit: contain;
+			filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5));
+			animation: popIn 1.6s cubic-bezier(.34,1.56,.64,1) both;
+		}
+		@keyframes popIn {
+			0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+			15% { transform: scale(1.15) rotate(8deg); opacity: 1; }
+			30% { transform: scale(1) rotate(-4deg); }
+			80% { transform: scale(1) rotate(0deg); opacity: 1; }
+			100% { transform: scale(0.7) translateY(-30px); opacity: 0; }
+		}
+
+		/* Globos: balloons floating upward */
+		.balloon-img {
+			position: absolute;
+			bottom: -140px;
+			width: 140px;
+			height: 140px;
+			object-fit: contain;
+			animation: floatUp 3.4s ease-in forwards;
+		}
+		@keyframes floatUp {
+			0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+			10% { opacity: 1; }
+			100% { transform: translateY(-140vh) translateX(var(--sway, 20px)) rotate(var(--rot, 10deg)); opacity: 0; }
+		}
+
+		/* Cantala si puedes: pulsing microphone + sound waves */
+		.mic-img {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			width: 230px;
+			height: 230px;
+			object-fit: contain;
+			transform: translate(-50%,-50%);
+			animation: micPulse 1s ease-in-out infinite;
+			filter: drop-shadow(0 10px 24px rgba(0,0,0,0.6));
+		}
+		@keyframes micPulse {
+			0%, 100% { transform: translate(-50%,-50%) scale(1) rotate(-4deg); }
+			50% { transform: translate(-50%,-50%) scale(1.12) rotate(4deg); }
+		}
+		.sound-wave {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			width: 40px;
+			height: 40px;
+			border: 3px solid rgba(255,255,255,0.7);
+			border-radius: 50%;
+			transform: translate(-50%,-50%);
+			animation: waveOut 1.8s ease-out infinite;
+		}
+		.sound-wave.w2 { animation-delay: 0.6s; }
+		.sound-wave.w3 { animation-delay: 1.2s; }
+		@keyframes waveOut {
+			0% { width: 40px; height: 40px; opacity: 0.8; }
+			100% { width: 420px; height: 420px; opacity: 0; }
+		}
+
+		/* Winner scene: trophy / medal / party popper */
+		.winner-img {
+			position: absolute;
+			width: 190px;
+			height: 190px;
+			object-fit: contain;
+			filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+			animation: winnerBounce 1.2s cubic-bezier(.34,1.56,.64,1) both;
+		}
+		@keyframes winnerBounce {
+			0% { transform: scale(0) translateY(60px) rotate(-20deg); opacity: 0; }
+			60% { transform: scale(1.2) translateY(-10px) rotate(8deg); opacity: 1; }
+			100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
+		}
+
+		/* Podium: silver/bronze reuse other medal shapes, tinted */
+		.podium-medal.silver { filter: grayscale(1) brightness(1.35) drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
+		.podium-medal.bronze { filter: sepia(1) saturate(2) hue-rotate(-25deg) brightness(0.95) drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
+		.podium-bg {
+			position: absolute;
+			left: 50%;
+			bottom: 4%;
+			width: 60%;
+			max-width: 640px;
+			transform: translateX(-50%);
+			object-fit: contain;
+			opacity: 0;
+			animation: podiumRise 1s ease-out 0.1s forwards;
+			filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5));
+		}
+		@keyframes podiumRise {
+			0% { opacity: 0; transform: translate(-50%, 40px); }
+			100% { opacity: 1; transform: translate(-50%, 0); }
+		}
+		.podium-label {
+			position: absolute;
+			color: #fff;
+			font-weight: 800;
+			text-align: center;
+			text-shadow: 0 4px 10px rgba(0,0,0,0.7);
+			font-size: clamp(13px, 1.6vw, 24px);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			animation: labelPop 0.7s cubic-bezier(.34,1.56,.64,1) both;
+		}
+		@keyframes labelPop {
+			0% { transform: scale(0); opacity: 0; }
+			70% { transform: scale(1.15); opacity: 1; }
+			100% { transform: scale(1); opacity: 1; }
+		}
+
+		/* Intento fallido */
+		.fail-img {
+			position: absolute;
+			left: 50%;
+			top: 32%;
+			width: 140px;
+			height: 140px;
+			object-fit: contain;
+			transform: translate(-50%,-50%);
+			animation: failShake 0.6s ease-in-out 2;
+			filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
+		}
+		@keyframes failShake {
+			0%, 100% { transform: translate(-50%,-50%) rotate(0deg); }
+			25% { transform: translate(-60%,-50%) rotate(-8deg); }
+			75% { transform: translate(-40%,-50%) rotate(8deg); }
+		}
+
+		/* Scene overlay */
+		#sceneOverlay {
+			display: none;
+			position: fixed;
+			inset: 0;
+			z-index: 9999;
+			align-items: center;
+			justify-content: center;
+		}
+
+		#sceneBackdrop {
+			position: absolute;
+			inset: 0;
+			background: rgba(0,0,0,0.45);
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+		}
+
+		#sceneCanvas {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			pointer-events: none;
+		}
+
+		#sceneContent {
+			position: relative;
+			z-index: 1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			inset: 0;
+			padding: 20px;
+		}
+
+		#sceneText {
+			color: #fff;
+			font-weight: 700;
+			text-align: center;
+			font-size: clamp(32px, 8vw, 160px);
+			text-shadow: 0 6px 18px rgba(0,0,0,0.6);
+			opacity: 0;
+			transform: scale(0.9);
+			transition: opacity 400ms ease, transform 600ms cubic-bezier(.22,.9,.3,1);
+		}
+	</style>
 </head>
-
-
 <body>
-
-
-    <!-- =========================================
-         TABLERO
-    ========================================== -->
-
-    <div class="tablero">
-
-
-        <!-- =====================================
-             ZONA INVISIBLE DEL TÍTULO
-        ====================================== -->
-
-        <div class="zona-titulo" id="zonaTitulo"></div>
-
-
-        <!-- =====================================
-             PAREJA 1
-        ====================================== -->
-
-        <button class="casilla fila1 ronda1">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <button class="casilla fila1 ronda2">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <button class="casilla fila1 ronda3">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <button class="casilla fila1 ronda4">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <!-- TOTAL PAREJA 1 -->
-
-        <div class="casilla fila1 total">
-
-            <span
-                class="numero-total"
-                id="total1">
-                0
-            </span>
-
-        </div>
-
-
-
-        <!-- =====================================
-             PAREJA 2
-        ====================================== -->
-
-        <button class="casilla fila2 ronda1">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <button class="casilla fila2 ronda2">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <button class="casilla fila2 ronda3">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <button class="casilla fila2 ronda4">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <!-- TOTAL PAREJA 2 -->
-
-        <div class="casilla fila2 total">
-
-            <span
-                class="numero-total"
-                id="total2">
-                0
-            </span>
-
-        </div>
-
-
-
-        <!-- =====================================
-             PAREJA 3
-        ====================================== -->
-
-        <button class="casilla fila3 ronda1">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <button class="casilla fila3 ronda2">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <button class="casilla fila3 ronda3">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <button class="casilla fila3 ronda4">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <!-- TOTAL PAREJA 3 -->
-
-        <div class="casilla fila3 total">
-
-            <span
-                class="numero-total"
-                id="total3">
-                0
-            </span>
-
-        </div>
-
-
-
-        <!-- =====================================
-             PAREJA 4
-        ====================================== -->
-
-        <button class="casilla fila4 ronda1">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <button class="casilla fila4 ronda2">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <button class="casilla fila4 ronda3">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <button class="casilla fila4 ronda4">
-
-            <img src="logo.png" alt="Punto">
-
-        </button>
-
-
-        <!-- TOTAL PAREJA 4 -->
-
-        <div class="casilla fila4 total">
-
-            <span
-                class="numero-total"
-                id="total4">
-                0
-            </span>
-
-        </div>
-
-
-    </div>
-
-
-
-    <!-- =========================================
-         JAVASCRIPT
-    ========================================== -->
-
-    <script>
-
-
-        /*
-        =========================================
-        MODO LOGO ESPECIAL x2
-        =========================================
-        */
-
-        let modoLogo2 = false;
-
-        const zonaTitulo =
-            document.getElementById("zonaTitulo");
-
-
-        /*
-        =========================================
-        PRESIONAR EL TÍTULO
-        =========================================
-        */
-
-        zonaTitulo.addEventListener(
-            "click",
-            function() {
-
-                modoLogo2 = !modoLogo2;
-
-                console.log(
-                    modoLogo2
-                        ? "Modo logo x2 ACTIVADO"
-                        : "Modo logo x2 DESACTIVADO"
-                );
-
-            }
-        );
-
-
-
-        /*
-        =========================================
-        BUSCAR TODAS LAS CASILLAS
-        =========================================
-        */
-
-        const casillas =
-            document.querySelectorAll(
-                ".casilla:not(.total)"
-            );
-
-
-
-        /*
-        =========================================
-        CUANDO SE PRESIONA UNA CASILLA
-        =========================================
-        */
-
-        casillas.forEach(
-            function(casilla) {
-
-                casilla.addEventListener(
-                    "click",
-                    function() {
-
-
-                        /*
-                        =================================
-                        MODO LOGO x2
-                        =================================
-                        */
-
-                        if (modoLogo2) {
-
-
-                            /*
-                            Solo funciona en RONDA 4
-                            */
-
-                            if (
-                                casilla.classList.contains(
-                                    "ronda4"
-                                )
-                            ) {
-
-
-                                const imagen =
-                                    casilla.querySelector(
-                                        "img"
-                                    );
-
-
-                                /*
-                                Si ya tiene logo2,
-                                vuelve al logo normal
-                                */
-
-                                if (
-                                    casilla.classList.contains(
-                                        "especial"
-                                    )
-                                ) {
-
-                                    imagen.src =
-                                        "logo.png";
-
-                                    imagen.alt =
-                                        "Punto";
-
-                                    casilla.classList.remove(
-                                        "especial"
-                                    );
-
-                                    casilla.classList.remove(
-                                        "activa"
-                                    );
-
-                                }
-
-                                /*
-                                Si no tiene logo2,
-                                coloca el logo especial
-                                */
-
-                                else {
-
-                                    imagen.src =
-                                        "logo2.png";
-
-                                    imagen.alt =
-                                        "2 puntos";
-
-                                    casilla.classList.add(
-                                        "especial"
-                                    );
-
-                                    casilla.classList.add(
-                                        "activa"
-                                    );
-
-                                }
-
-
-                                actualizarTotales();
-
-                            }
-
-
-                            /*
-                            Evitamos que el modo especial
-                            ejecute el funcionamiento normal
-                            */
-
-                            return;
-
-                        }
-
-
-
-                        /*
-                        =================================
-                        FUNCIONAMIENTO NORMAL
-                        =================================
-                        */
-
-                        casilla.classList.toggle(
-                            "activa"
-                        );
-
-
-                        /*
-                        Si se desactiva una casilla
-                        especial, restauramos logo.png
-                        */
-
-                        if (
-                            !casilla.classList.contains(
-                                "activa"
-                            )
-                        ) {
-
-                            if (
-                                casilla.classList.contains(
-                                    "especial"
-                                )
-                            ) {
-
-                                const imagen =
-                                    casilla.querySelector(
-                                        "img"
-                                    );
-
-                                imagen.src =
-                                    "logo.png";
-
-                                imagen.alt =
-                                    "Punto";
-
-                                casilla.classList.remove(
-                                    "especial"
-                                );
-
-                            }
-
-                        }
-
-
-                        actualizarTotales();
-
-
-                    }
-                );
-
-            }
-        );
-
-
-
-        /*
-        =========================================
-        CALCULAR LOS TOTALES
-        =========================================
-        */
-
-        function actualizarTotales() {
-
-
-            /*
-            Recorremos las 4 parejas
-            */
-
-            for (
-                let pareja = 1;
-                pareja <= 4;
-                pareja++
-            ) {
-
-
-                /*
-                Buscamos las casillas
-                correspondientes a esa pareja
-                */
-
-                const fila =
-                    document.querySelectorAll(
-                        ".fila" +
-                        pareja +
-                        ":not(.total)"
-                    );
-
-
-                /*
-                Comenzamos en 0 puntos
-                */
-
-                let puntos = 0;
-
-
-                /*
-                Revisamos las 4 rondas
-                */
-
-                fila.forEach(
-                    function(casilla) {
-
-
-                        /*
-                        Si la casilla está activa
-                        */
-
-                        if (
-                            casilla.classList.contains(
-                                "activa"
-                            )
-                        ) {
-
-
-                            /*
-                            Logo especial = 2 puntos
-                            */
-
-                            if (
-                                casilla.classList.contains(
-                                    "especial"
-                                )
-                            ) {
-
-                                puntos += 2;
-
-                            }
-
-                            /*
-                            Logo normal = 1 punto
-                            */
-
-                            else {
-
-                                puntos += 1;
-
-                            }
-
-                        }
-
-                    }
-                );
-
-
-                /*
-                Mostramos el total
-                */
-
-                document.getElementById(
-                    "total" + pareja
-                ).textContent = puntos;
-
-
-            }
-
-        }
-
-
-
-        /*
-        =========================================
-        TECLA ESC
-        =========================================
-
-        Presionar ESC elimina todos
-        los logos y vuelve los totales a 0.
-        */
-
-        document.addEventListener(
-            "keydown",
-            function(event) {
-
-
-                if (event.key === "Escape") {
-
-
-                    /*
-                    Quitamos todos los logos
-                    */
-
-                    casillas.forEach(
-                        function(casilla) {
-
-
-                            casilla.classList.remove(
-                                "activa"
-                            );
-
-                            casilla.classList.remove(
-                                "especial"
-                            );
-
-
-                            /*
-                            Restauramos el logo normal
-                            */
-
-                            const imagen =
-                                casilla.querySelector(
-                                    "img"
-                                );
-
-                            imagen.src =
-                                "logo.png";
-
-                            imagen.alt =
-                                "Punto";
-
-                        }
-                    );
-
-
-                    /*
-                    Desactivamos el modo x2
-                    */
-
-                    modoLogo2 = false;
-
-
-                    /*
-                    Actualizamos los totales
-                    */
-
-                    actualizarTotales();
-
-
-                }
-
-            }
-        );
-
-
-    </script>
-
-
+	<!-- Left margin (gradient) -->
+	<div id="marginLeft"></div>
+
+	<!-- Center app area -->
+	<div id="appContainer">
+		<div class="app-ratio">
+			<div class="app-inner">
+				<!-- Game board -->
+				<div class="embedded-game">
+					<div class="tablero">
+						<div class="zona-titulo" id="zonaTitulo"></div>
+						<!-- Row 1 -->
+						<button class="casilla fila1 ronda1"><img src="/resources/Logo.png" alt="Punto"></button>
+						<button class="casilla fila1 ronda2"><img src="/resources/Logo.png" alt="Punto"></button>
+						<button class="casilla fila1 ronda3"><img src="/resources/Logo.png" alt="Punto"></button>
+						<button class="casilla fila1 ronda4"><img src="/resources/Logo.png" alt="Punto"></button>
+						<div class="casilla fila1 total"><span class="numero-total" id="total1">0</span></div>
+						<!-- Row 2 -->
+						<button class="casilla fila2 ronda1"><img src="/resources/Logo.png" alt="Punto"></button>
+						<button class="casilla fila2 ronda2"><img src="/resources/Logo.png" alt="Punto"></button>
+						<button class="casilla fila2 ronda3"><img src="/resources/Logo.png" alt="Punto"></button>
+						<button class="casilla fila2 ronda4"><img src="/resources/Logo.png" alt="Punto"></button>
+						<div class="casilla fila2 total"><span class="numero-total" id="total2">0</span></div>
+						<!-- Row 3 -->
+						<button class="casilla fila3 ronda1"><img src="/resources/Logo.png" alt="Punto"></button>
+						<button class="casilla fila3 ronda2"><img src="/resources/Logo.png" alt="Punto"></button>
+						<button class="casilla fila3 ronda3"><img src="/resources/Logo.png" alt="Punto"></button>
+						<button class="casilla fila3 ronda4"><img src="/resources/Logo.png" alt="Punto"></button>
+						<div class="casilla fila3 total"><span class="numero-total" id="total3">0</span></div>
+						<!-- Row 4 -->
+						<button class="casilla fila4 ronda1"><img src="/resources/Logo.png" alt="Punto"></button>
+						<button class="casilla fila4 ronda2"><img src="/resources/Logo.png" alt="Punto"></button>
+						<button class="casilla fila4 ronda3"><img src="/resources/Logo.png" alt="Punto"></button>
+						<button class="casilla fila4 ronda4"><img src="/resources/Logo.png" alt="Punto"></button>
+						<div class="casilla fila4 total"><span class="numero-total" id="total4">0</span></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Right margin (gradient) -->
+	<div id="marginRight"></div>
+
+	<!-- Tiny connection indicator, replaces the old footer -->
+	<div id="statusDot"></div>
+
+	<!-- Scene overlay -->
+	<div id="sceneOverlay">
+		<div id="sceneBackdrop"></div>
+		<canvas id="sceneCanvas" width="800" height="600"></canvas>
+		<div id="sceneExtras"></div>
+		<div id="sceneContent">
+			<div id="sceneText"></div>
+		</div>
+	</div>
+
+	<script>
+		// Size the 16:9 app box to fit #appContainer exactly (contain-fit), driven by ResizeObserver
+		// instead of relying on CSS auto+aspect-ratio inside a flex parent (which collapses to 0x0).
+		(function(){
+			const APP_RATIO = 16 / 9;
+			const container = document.getElementById('appContainer');
+			const stage = document.querySelector('.app-ratio');
+			if(!container || !stage) return;
+
+			function layoutStage(){
+				const cw = container.clientWidth;
+				const ch = container.clientHeight;
+				if(cw <= 0 || ch <= 0) return;
+				let w = cw, h = w / APP_RATIO;
+				if(h > ch){ h = ch; w = h * APP_RATIO; }
+				stage.style.width = Math.round(w) + 'px';
+				stage.style.height = Math.round(h) + 'px';
+			}
+
+			new ResizeObserver(layoutStage).observe(container);
+			window.addEventListener('resize', layoutStage);
+			layoutStage();
+		})();
+
+		// Game board logic
+		(function(){
+			const container = document.querySelector('.embedded-game');
+			if(!container) return;
+			const casillas = Array.from(container.querySelectorAll('.casilla:not(.total)'));
+			let modoLogo2 = false;
+			const zonaTitulo = container.querySelector('#zonaTitulo');
+
+			if(zonaTitulo){
+				zonaTitulo.addEventListener('click', ()=>{
+					modoLogo2 = !modoLogo2;
+					console.log(modoLogo2? 'Modo logo x2 ACTIVADO' : 'Modo logo x2 DESACTIVADO');
+				});
+			}
+
+			// Local particle burst wherever a casilla just got marked, called lazily
+			// (defined later, in the scene-overlay script) so it's safe to reference here.
+			function burst(casilla){
+				if(typeof window.burstAtElement === 'function') window.burstAtElement(casilla);
+			}
+
+			// Marking a space announces that pareja's win for that ronda: index
+			// (0-15) maps to pareja = floor(idx/4), ronda = idx % 4.
+			function announceRound(idx){
+				if(typeof window.triggerRoundScene === 'function'){
+					window.triggerRoundScene(Math.floor(idx/4), idx % 4);
+				}
+			}
+
+			casillas.forEach((casilla, idx) => {
+				casilla.addEventListener('click', ()=>{
+					if(modoLogo2){
+						if(casilla.classList.contains('ronda4')){
+							const imagen = casilla.querySelector('img');
+							if(casilla.classList.contains('especial')){
+								imagen.src = '/resources/Logo.png';
+								imagen.alt='Punto';
+								casilla.classList.remove('especial','activa');
+							} else {
+								imagen.src = '/resources/Logo2.png';
+								imagen.alt='2 puntos';
+								casilla.classList.add('especial','activa');
+								burst(casilla);
+								announceRound(idx);
+							}
+							actualizarTotales();
+						}
+						return;
+					}
+					casilla.classList.toggle('activa');
+					if(casilla.classList.contains('activa')){
+						burst(casilla);
+						announceRound(idx);
+					} else if(casilla.classList.contains('especial')){
+						const imagen = casilla.querySelector('img');
+						imagen.src = '/resources/Logo.png';
+						imagen.alt='Punto';
+						casilla.classList.remove('especial');
+					}
+					actualizarTotales();
+				});
+			});
+
+			function actualizarTotales(){
+				for(let pareja=1; pareja<=4; pareja++){
+					const fila = Array.from(container.querySelectorAll('.casilla.fila'+pareja+':not(.total)'));
+					let puntos = 0;
+					fila.forEach(c=>{
+						if(c.classList.contains('activa')){
+							puntos += c.classList.contains('especial')?2:1;
+						}
+					});
+					const el = container.querySelector('#total'+pareja);
+					if(el) el.textContent = puntos;
+				}
+			}
+
+			document.addEventListener('keydown', (event)=>{
+				if(event.key === 'Escape'){
+					casillas.forEach(c=>{
+						c.classList.remove('activa','especial');
+						const imagen = c.querySelector('img');
+						if(imagen){
+							imagen.src = '/resources/Logo.png';
+							imagen.alt='Punto';
+						}
+					});
+					modoLogo2 = false;
+					actualizarTotales();
+				}
+			});
+
+			window.setEmbeddedSpace = function(idx, value){
+				const c = casillas[idx];
+				if(!c) return;
+				if(value){
+					c.classList.add('activa');
+					burst(c);
+					announceRound(idx);
+				} else {
+					c.classList.remove('activa');
+					c.classList.remove('especial');
+					const imagen = c.querySelector('img');
+					if(imagen){
+						imagen.src = '/resources/Logo.png';
+						imagen.alt='Punto';
+					}
+				}
+				actualizarTotales();
+			};
+		})();
+
+		// SSE connection. Names live only in this variable (never drawn on the
+		// board itself) — they're read by the round/podium scene text.
+		let playerNames = ['Pareja 1','Pareja 2','Pareja 3','Pareja 4'];
+
+		const statusDot = document.getElementById('statusDot');
+		const es = new EventSource('/events');
+		es.onopen = () => {
+			if(statusDot){ statusDot.classList.add('ok'); statusDot.classList.remove('err'); }
+		};
+		es.onmessage = (e) => {
+			try{
+				const data = JSON.parse(e.data);
+				if(data.type === 'control'){
+					if (typeof window.showScene === 'function') window.showScene(data.action);
+				} else if (data.type === 'names'){
+					if(Array.isArray(data.names)){
+						playerNames = data.names.map(n => String(n || '').trim() || '');
+					}
+				} else if (data.type === 'space'){
+					const idx = Number(data.index);
+					if(typeof window.setEmbeddedSpace === 'function'){
+						try{ window.setEmbeddedSpace(idx, !!data.value); }catch(e){ console.warn('setEmbeddedSpace failed',e); }
+					}
+				} else if (data.type === 'podium'){
+					if(Array.isArray(data.names) && typeof window.triggerPodiumScene === 'function'){
+						window.triggerPodiumScene(data.names);
+					}
+				}
+			}catch(err){ console.error('Event parse error:', e.data); }
+		};
+		es.onerror = ()=>{
+			if(statusDot){ statusDot.classList.add('err'); statusDot.classList.remove('ok'); }
+		};
+
+		// Local particle burst at any element (used when a casilla gets marked)
+		(function(){
+			function burstAtElement(el){
+				const parent = document.querySelector('.embedded-game');
+				if(!parent || !el) return;
+				const parentRect = parent.getBoundingClientRect();
+				const rect = el.getBoundingClientRect();
+				const cx = rect.left + rect.width/2 - parentRect.left;
+				const cy = rect.top + rect.height/2 - parentRect.top;
+				const colors = ['255,210,60', '255,105,180', '110,200,255', '120,255,140'];
+				for(let i=0;i<12;i++){
+					const p = document.createElement('div');
+					p.className = 'mark-particle';
+					const angle = Math.random()*Math.PI*2;
+					const dist = 20 + Math.random()*45;
+					p.style.setProperty('--dx', Math.cos(angle)*dist+'px');
+					p.style.setProperty('--dy', Math.sin(angle)*dist+'px');
+					p.style.left = cx+'px';
+					p.style.top = cy+'px';
+					const size = 4 + Math.random()*5;
+					p.style.width = size+'px';
+					p.style.height = size+'px';
+					const color = colors[Math.floor(Math.random()*colors.length)];
+					p.style.background = `rgba(${color},${0.7+Math.random()*0.3})`;
+					parent.appendChild(p);
+					setTimeout(()=>p.remove(), 600);
+				}
+			}
+			window.burstAtElement = burstAtElement;
+		})();
+
+		// Scene overlay: fullscreen animated scenes per game event
+		(function(){
+			const GAME_ASSETS = '/resources/game/';
+			const overlay = document.getElementById('sceneOverlay');
+			const canvas = document.getElementById('sceneCanvas');
+			const ctx = canvas.getContext('2d');
+			const extras = document.getElementById('sceneExtras');
+			const sceneText = document.getElementById('sceneText');
+			const appRatio = document.querySelector('.app-ratio');
+
+			let raf = null;
+			let particles = [];
+			let running = false;
+			let hideTimeout = null;
+
+			function fitCanvas(){
+				const dpr = window.devicePixelRatio || 1;
+				canvas.width = Math.max(1, Math.floor(canvas.clientWidth * dpr));
+				canvas.height = Math.max(1, Math.floor(canvas.clientHeight * dpr));
+				ctx.setTransform(dpr,0,0,dpr,0,0);
+			}
+			window.addEventListener('resize', fitCanvas);
+			fitCanvas();
+
+			function rand(min,max){ return Math.random()*(max-min)+min }
+
+			function createParticles(colors){
+				particles = [];
+				const count = 110;
+				for(let i=0;i<count;i++){
+					const color = colors[Math.floor(Math.random()*colors.length)];
+					particles.push({
+						x: rand(0, canvas.width),
+						y: rand(0, canvas.height),
+						vx: rand(-0.6,0.6),
+						vy: rand(-1.5,-0.2),
+						r: rand(1,4),
+						life: rand(120,280),
+						age: 0,
+						color
+					});
+				}
+			}
+
+			function draw(){
+				ctx.clearRect(0,0,canvas.width,canvas.height);
+				for(let p of particles){
+					p.age++;
+					p.x += p.vx * 2;
+					p.y += p.vy * 2 - (p.age/200);
+					const alpha = Math.max(0, 1 - p.age / p.life);
+					ctx.beginPath();
+					ctx.fillStyle = `rgba(${p.color.r},${p.color.g},${p.color.b},${alpha})`;
+					ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+					ctx.fill();
+				}
+				particles = particles.filter(p => p.age < p.life);
+				if(particles.length === 0) stop();
+				else raf = requestAnimationFrame(draw);
+			}
+
+			function start(){
+				if(running) return;
+				running = true;
+				fitCanvas();
+				raf = requestAnimationFrame(draw);
+			}
+
+			function stop(){
+				running = false;
+				if(raf) cancelAnimationFrame(raf);
+				raf = null;
+			}
+
+			function addExtraImage(imgCfg){
+				const img = document.createElement('img');
+				img.src = imgCfg.src;
+				img.className = imgCfg.cls;
+				if(imgCfg.style){
+					const { vars, ...rest } = imgCfg.style;
+					Object.assign(img.style, rest);
+					if(vars) for(const k in vars) img.style.setProperty(k, vars[k]);
+				}
+				extras.appendChild(img);
+			}
+
+			function addExtraLabel(text, style){
+				const d = document.createElement('div');
+				d.className = 'podium-label';
+				d.textContent = text;
+				if(style) Object.assign(d.style, style);
+				extras.appendChild(d);
+			}
+
+			function randomAnimalImages(n){
+				const pool = ['cat','dog','owl','monkey','panda','rabbit','dolphin','red-fox','koala'];
+				const out = [];
+				for(let i=0;i<n;i++){
+					const slug = pool[Math.floor(Math.random()*pool.length)];
+					out.push({
+						src: GAME_ASSETS + slug + '.png',
+						cls: 'pop-img',
+						style: {
+							left: (8 + Math.random()*72) + '%',
+							top: (14 + Math.random()*56) + '%',
+							animationDelay: (Math.random()*0.7) + 's'
+						}
+					});
+				}
+				return out;
+			}
+
+			function randomBalloonImages(n){
+				const out = [];
+				for(let i=0;i<n;i++){
+					out.push({
+						src: GAME_ASSETS + 'balloon.png',
+						cls: 'balloon-img',
+						style: {
+							left: (3 + Math.random()*90) + '%',
+							filter: 'hue-rotate(' + Math.floor(Math.random()*360) + 'deg) drop-shadow(0 8px 12px rgba(0,0,0,0.4))',
+							animationDelay: (Math.random()*1.4) + 's',
+							animationDuration: (3 + Math.random()*2) + 's',
+							vars: {
+								'--sway': (Math.random()*80 - 40) + 'px',
+								'--rot': (Math.random()*40 - 20) + 'deg'
+							}
+						}
+					});
+				}
+				return out;
+			}
+
+			// Per-game scene configuration: text, particle color palette, extra decorations
+			const GAME_SCENES = {
+				'Iniciar Juego 1': {
+					text: 'PRIMER JUEGO: LA COREOGRAFÍA',
+					colors: [{r:10,g:150,b:255},{r:255,g:255,b:255},{r:120,g:200,b:255}],
+					spotlights: true,
+					duration: 3200
+				},
+				'Iniciar Juego 2': {
+					text: 'SEGUNDO JUEGO: EL CORTEJO',
+					colors: [{r:10,g:200,b:120},{r:255,g:200,b:80}],
+					images: () => randomAnimalImages(5),
+					duration: 3400
+				},
+				'Iniciar Juego 3': {
+					text: 'TERCER JUEGO: LOS GLOBOS',
+					colors: [{r:241,g:107,b:252},{r:192,g:106,b:252},{r:252,g:106,b:187},{r:144,g:106,b:252},{r:252,g:108,b:106},{r:255,g:210,b:60}],
+					images: () => randomBalloonImages(14),
+					duration: 3800
+				},
+				'Iniciar Juego 4': {
+					text: 'CUARTO JUEGO: ¡CANTALA SI PUEDES!',
+					colors: [{r:200,g:120,b:240},{r:255,g:255,b:255}],
+					images: () => [{ src: GAME_ASSETS + 'karaoke-microphone.png', cls: 'mic-img' }],
+					waves: true,
+					duration: 3200
+				},
+				'Intento Fallido': {
+					text: 'INTENTO FALLIDO',
+					colors: [{r:180,g:30,b:30}],
+					images: () => [{ src: GAME_ASSETS + 'x-mark.png', cls: 'fail-img' }],
+					duration: 2400
+				}
+			};
+
+			function renderScene(cfg){
+				if(hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null }
+				extras.innerHTML = '';
+
+				if(cfg.spotlights){
+					['s1','s2','s3'].forEach(c=>{
+						const d = document.createElement('div');
+						d.className = 'spotlight ' + c;
+						extras.appendChild(d);
+					});
+				}
+				if(cfg.waves){
+					['w1','w2','w3'].forEach(c=>{
+						const d = document.createElement('div');
+						d.className = 'sound-wave ' + c;
+						extras.appendChild(d);
+					});
+				}
+				(typeof cfg.images === 'function' ? cfg.images() : (cfg.images || [])).forEach(addExtraImage);
+
+				if(appRatio) appRatio.style.filter = 'blur(6px)';
+
+				sceneText.style.opacity = '0';
+				sceneText.style.transform = 'scale(0.9)';
+				sceneText.textContent = cfg.text;
+				overlay.style.display = 'flex';
+
+				createParticles(cfg.colors);
+				start();
+
+				requestAnimationFrame(()=>{
+					sceneText.style.opacity = '1';
+					sceneText.style.transform = 'scale(1)';
+				});
+
+				hideTimeout = setTimeout(()=>{
+					sceneText.style.opacity = '0';
+					sceneText.style.transform = 'scale(0.9)';
+					setTimeout(()=>{
+						overlay.style.display = 'none';
+						extras.innerHTML = '';
+						if(appRatio) appRatio.style.filter = '';
+					}, 400);
+				}, cfg.duration || 2800);
+			}
+
+			function showScene(action){
+				const cfg = GAME_SCENES[action] || { text: action.toUpperCase(), colors: [{r:255,g:255,b:255}] };
+				renderScene(cfg);
+			}
+
+			// Fired on every "Marcar Espacio": a pareja just won that ronda.
+			function triggerRoundScene(parejaIdx, rondaIdx){
+				const fallback = 'PAREJA ' + (parejaIdx + 1);
+				const name = (playerNames[parejaIdx] || fallback).trim().toUpperCase() || fallback;
+				renderScene({
+					text: 'GANADORES DE LA RONDA ' + (rondaIdx + 1) + ': ' + name,
+					colors: [{r:255,g:210,b:60},{r:255,g:105,b:180},{r:110,g:200,b:255},{r:120,g:255,b:140}],
+					images: () => [
+						{ src: GAME_ASSETS + 'trophy.png', cls: 'winner-img', style: { left: 'calc(50% - 95px)', top: '18%' } },
+						{ src: GAME_ASSETS + 'party-popper.png', cls: 'winner-img', style: { left: 'calc(15% - 60px)', top: '60%', width: '130px', height: '130px', animationDelay: '0.15s' } },
+						{ src: GAME_ASSETS + 'party-popper.png', cls: 'winner-img', style: { left: 'calc(85% - 70px)', top: '60%', width: '130px', height: '130px', animationDelay: '0.3s' } }
+					],
+					duration: 2800
+				});
+			}
+
+			// Manually triggered from the controller's "Podio Final" panel: the
+			// overall winners for 1st, 2nd and 3rd place.
+			function triggerPodiumScene(names){
+				renderScene({
+					text: 'PODIO FINAL',
+					colors: [{r:255,g:210,b:60},{r:210,g:210,b:225},{r:205,g:127,b:50},{r:255,g:255,b:255}],
+					images: () => [
+						{ src: GAME_ASSETS + 'sports-podium.png', cls: 'podium-bg' },
+						{ src: GAME_ASSETS + 'gold-medal.png', cls: 'winner-img', style: { left: 'calc(50% - 95px)', top: '4%' } },
+						{ src: GAME_ASSETS + 'triathlon-medal.png', cls: 'winner-img podium-medal silver', style: { left: 'calc(20% - 70px)', top: '20%', width: '150px', height: '150px', animationDelay: '0.15s' } },
+						{ src: GAME_ASSETS + 'beach-volleyball-medal.png', cls: 'winner-img podium-medal bronze', style: { left: 'calc(80% - 70px)', top: '24%', width: '150px', height: '150px', animationDelay: '0.3s' } }
+					],
+					duration: 5200
+				});
+				requestAnimationFrame(()=>{
+					addExtraLabel('🥇 ' + String(names[0] || '—').toUpperCase(), { left: 'calc(50% - 110px)', top: '38%', width: '220px' });
+					addExtraLabel('🥈 ' + String(names[1] || '—').toUpperCase(), { left: 'calc(20% - 90px)', top: '52%', width: '180px' });
+					addExtraLabel('🥉 ' + String(names[2] || '—').toUpperCase(), { left: 'calc(80% - 90px)', top: '56%', width: '180px' });
+				});
+			}
+
+			window.showScene = showScene;
+			window.triggerRoundScene = triggerRoundScene;
+			window.triggerPodiumScene = triggerPodiumScene;
+		})();
+	</script>
 </body>
-
 </html>

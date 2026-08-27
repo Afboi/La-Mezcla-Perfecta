@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Control - La Mezcla Perfecta</title>
+	<style>
+		:root{
+			font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+			--accent:#8b5cf6;
+			--accent-2:#22d3ee;
+			--bg:#0e0f14;
+			--panel:#171922;
+			--panel-2:#1e2029;
+			--border:#2a2d3a;
+			--text:#e6e7ee;
+			--text-dim:#9195a6;
+		}
+		*{box-sizing:border-box}
+		body{margin:0;padding:14px;color:var(--text);background:var(--bg);max-width:1100px}
+		h1{margin:0 0 2px 0;font-size:18px;font-weight:700;letter-spacing:.01em}
+		.subtitle{color:var(--text-dim);margin:0 0 14px 0;font-size:12px}
+
+		.row-groups{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+		.group{
+			background:var(--panel);border:1px solid var(--border);border-radius:10px;
+			padding:12px 14px;margin-bottom:12px;
+		}
+		.group h2{
+			margin:0 0 10px 0;font-size:12px;text-transform:uppercase;letter-spacing:.06em;
+			color:var(--accent-2);display:flex;align-items:center;gap:7px;font-weight:700;
+		}
+		.group h2 .n{
+			display:inline-flex;align-items:center;justify-content:center;
+			width:17px;height:17px;border-radius:50%;background:var(--accent);color:#fff;
+			font-size:10px;font-weight:700;flex:none;
+		}
+
+		.events-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+		.events-grid button{
+			padding:10px 8px;font-size:12.5px;font-weight:600;border-radius:7px;border:1px solid var(--border);
+			background:var(--panel-2);color:var(--text);cursor:pointer;transition:transform .1s ease, background .15s ease;
+		}
+		.events-grid button:hover{background:#252836}
+		.events-grid button:active{transform:scale(0.96)}
+		.events-grid button.juego{background:#1c2340;border-color:#33407a;color:#a9b6ff}
+		.events-grid button.fallo{background:#301919;border-color:#6b2a2a;color:#ff9b9b}
+
+		.hint{font-size:11px;color:var(--text-dim);margin:8px 0 0 0;line-height:1.4}
+
+		.names-form{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+		.name-field{display:flex;align-items:center;gap:6px}
+		.name-field .dot{width:10px;height:10px;border-radius:50%;flex:none}
+		.name-field input{
+			flex:1;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;
+			background:var(--panel-2);color:var(--text);
+		}
+		.name-field input:focus{outline:none;border-color:var(--accent)}
+		.names-form button{
+			grid-column:1/3;padding:9px;margin-top:2px;border-radius:7px;border:none;
+			background:var(--accent);color:#fff;font-weight:700;cursor:pointer;font-size:13px;
+		}
+		.names-form button:hover{background:#7c3aed}
+
+		.mark-table{width:100%;border-collapse:separate;border-spacing:5px}
+		.mark-table th{font-size:10px;color:var(--text-dim);text-transform:uppercase;padding:2px 4px;text-align:center}
+		.mark-table th.pareja-col{text-align:left}
+		.mark-table td.pareja-col{
+			font-size:12px;font-weight:700;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+			border-left:4px solid transparent;color:var(--text);
+		}
+		.mark-btn{
+			width:100%;padding:9px 4px;font-size:12px;border-radius:6px;border:1px solid var(--border);
+			background:var(--panel-2);color:var(--text);cursor:pointer;
+		}
+		.mark-btn:hover{background:#252836}
+		.mark-btn.active{background:var(--accent-2);color:#04303a;border-color:var(--accent-2);font-weight:700}
+
+		.podium-form{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+		.podium-field{display:flex;flex-direction:column;gap:4px}
+		.podium-field label{font-size:11px;color:var(--text-dim);font-weight:600}
+		.podium-field select{
+			padding:8px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;
+			background:var(--panel-2);color:var(--text);
+		}
+		.podium-field.p1 label{color:#ffd23c}
+		.podium-field.p2 label{color:#c7c9d6}
+		.podium-field.p3 label{color:#cd8a4e}
+		#podiumBtn{
+			grid-column:1/4;margin-top:6px;padding:10px;border-radius:7px;border:none;
+			background:linear-gradient(90deg,#8b5cf6,#22d3ee);color:#0a0a0f;font-weight:800;
+			cursor:pointer;font-size:13px;
+		}
+		#podiumBtn:hover{filter:brightness(1.08)}
+
+		#log{
+			margin-top:2px;white-space:pre-wrap;max-width:100%;font-size:10.5px;color:var(--text-dim);
+			background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:9px;
+			max-height:120px;overflow-y:auto;
+		}
+	</style>
+</head>
+<body>
+	<h1>🎛️ Control de Backstage</h1>
+	<p class="subtitle">La Mezcla Perfecta — panel para manejar la transmisión en vivo</p>
+
+	<div class="row-groups">
+		<section class="group">
+			<h2><span class="n">1</span>Jugadores (memoria)</h2>
+			<form id="namesForm" class="names-form">
+				<div class="name-field"><span class="dot" style="background:#6d28d9"></span><input id="p1" placeholder="Pareja 1" value="Pareja 1" /></div>
+				<div class="name-field"><span class="dot" style="background:#0d9488"></span><input id="p2" placeholder="Pareja 2" value="Pareja 2" /></div>
+				<div class="name-field"><span class="dot" style="background:#db2777"></span><input id="p3" placeholder="Pareja 3" value="Pareja 3" /></div>
+				<div class="name-field"><span class="dot" style="background:#ea580c"></span><input id="p4" placeholder="Pareja 4" value="Pareja 4" /></div>
+				<button type="submit">Guardar nombres en memoria</button>
+			</form>
+			<p class="hint">Los nombres NO se muestran en el tablero. Quedan solo en memoria y aparecen en MAYÚSCULAS dentro de la animación de cada ronda ganada y en el podio final.</p>
+		</section>
+
+		<section class="group">
+			<h2><span class="n">2</span>Escenas de Juego</h2>
+			<div class="events-grid" id="quickEvents"><!-- botones agregados por JS --></div>
+			<p class="hint">Cada "Marcar Espacio" (abajo) dispara sola la animación "Ganadores de la Ronda N: Pareja".</p>
+		</section>
+	</div>
+
+	<section class="group">
+		<h2><span class="n">3</span>Marcar Espacios del Tablero</h2>
+		<p class="hint" style="margin:0 0 10px 0">Cada botón enciende el logo de esa pareja/ronda en la pantalla en vivo y dispara la animación de esa ronda automáticamente.</p>
+		<table class="mark-table">
+			<thead>
+				<tr><th class="pareja-col">Pareja</th><th>Ronda 1</th><th>Ronda 2</th><th>Ronda 3</th><th>Ronda 4</th></tr>
+			</thead>
+			<tbody id="markTableBody"><!-- filas agregadas por JS --></tbody>
+		</table>
+	</section>
+
+	<section class="group">
+		<h2><span class="n">4</span>Podio Final</h2>
+		<p class="hint" style="margin:0 0 10px 0">Elegí manualmente las 3 parejas ganadoras del programa y mostrá la escena final del podio.</p>
+		<div class="podium-form">
+			<div class="podium-field p1"><label>🥇 1er lugar</label><select id="podium1"></select></div>
+			<div class="podium-field p2"><label>🥈 2do lugar</label><select id="podium2"></select></div>
+			<div class="podium-field p3"><label>🥉 3er lugar</label><select id="podium3"></select></div>
+			<button id="podiumBtn" type="button">🏆 Mostrar Podio Final</button>
+		</div>
+	</section>
+
+	<section class="group">
+		<h2><span class="n">5</span>Registro de Eventos</h2>
+		<pre id="log"></pre>
+	</section>
+
+	<script>
+		const QUICK = [
+			{ label: 'Iniciar Juego 1: Coreografía', action: 'Iniciar Juego 1', cls: 'juego' },
+			{ label: 'Iniciar Juego 2: El Cortejo', action: 'Iniciar Juego 2', cls: 'juego' },
+			{ label: 'Iniciar Juego 3: Los Globos', action: 'Iniciar Juego 3', cls: 'juego' },
+			{ label: 'Iniciar Juego 4: Cantala si Puedes', action: 'Iniciar Juego 4', cls: 'juego' },
+			{ label: 'Intento Fallido', action: 'Intento Fallido', cls: 'fallo' }
+		];
+
+		const PAREJA_COLORS = ['#6d28d9', '#0d9488', '#db2777', '#ea580c'];
+
+		const quickEl = document.getElementById('quickEvents');
+		const log = document.getElementById('log');
+
+		function logLine(s){ log.textContent = `${new Date().toLocaleTimeString()} - ${s}\n` + log.textContent }
+
+		async function sendEvent(payload){
+			try{
+				await fetch('/api/event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+				logLine('Enviado: '+JSON.stringify(payload));
+			}catch(e){ logLine('Error: '+e) }
+		}
+
+		// Quick event buttons
+		QUICK.forEach(({label, action, cls}) => {
+			const btn = document.createElement('button');
+			btn.textContent = label;
+			btn.className = cls;
+			btn.addEventListener('click', () => {
+				sendEvent({ type: 'control', action, ts: Date.now() });
+			});
+			quickEl.appendChild(btn);
+		});
+
+		// Names form (memory only — never rendered on the live board)
+		const namesForm = document.getElementById('namesForm');
+		const nameInputs = [1,2,3,4].map(i => document.getElementById('p'+i));
+		let currentNames = nameInputs.map(el => el.value);
+
+		namesForm.addEventListener('submit', (e) => {
+			e.preventDefault();
+			currentNames = nameInputs.map((el, i) => el.value || ('Pareja '+(i+1)));
+			sendEvent({ type: 'names', names: currentNames, ts: Date.now() });
+			logLine('Nombres actualizados (memoria): '+JSON.stringify(currentNames));
+			renderMarkTable();
+			renderPodiumSelects();
+		});
+		nameInputs.forEach(el => el.addEventListener('input', () => {
+			currentNames = nameInputs.map((n, i) => n.value || ('Pareja '+(i+1)));
+			renderMarkTable();
+			renderPodiumSelects();
+		}));
+
+		// Marcar Espacios: 4 parejas x 4 rondas, index matches the board's casilla order (0-15)
+		const markState = new Array(16).fill(false);
+		const markBody = document.getElementById('markTableBody');
+
+		function renderMarkTable(){
+			markBody.innerHTML = '';
+			for(let pareja = 0; pareja < 4; pareja++){
+				const tr = document.createElement('tr');
+
+				const nameTd = document.createElement('td');
+				nameTd.className = 'pareja-col';
+				nameTd.textContent = currentNames[pareja] || ('Pareja '+(pareja+1));
+				nameTd.style.borderLeftColor = PAREJA_COLORS[pareja];
+				tr.appendChild(nameTd);
+
+				for(let ronda = 0; ronda < 4; ronda++){
+					const idx = pareja*4 + ronda;
+					const td = document.createElement('td');
+					const btn = document.createElement('button');
+					btn.className = 'mark-btn' + (markState[idx] ? ' active' : '');
+					btn.textContent = 'Ronda ' + (ronda+1);
+					btn.addEventListener('click', () => {
+						markState[idx] = !markState[idx];
+						btn.classList.toggle('active', markState[idx]);
+						sendEvent({ type: 'space', index: idx, value: markState[idx], ts: Date.now() });
+					});
+					td.appendChild(btn);
+					tr.appendChild(td);
+				}
+				markBody.appendChild(tr);
+			}
+		}
+
+		// Podio Final: pick 3 parejas by current name, trigger the podium scene
+		const podiumSelects = [1,2,3].map(i => document.getElementById('podium'+i));
+
+		function renderPodiumSelects(){
+			podiumSelects.forEach((sel, i) => {
+				const prevValue = sel.value;
+				sel.innerHTML = '';
+				currentNames.forEach((name, idx) => {
+					const opt = document.createElement('option');
+					opt.value = String(idx);
+					opt.textContent = name || ('Pareja '+(idx+1));
+					sel.appendChild(opt);
+				});
+				if(prevValue !== '' && Number(prevValue) < currentNames.length){
+					sel.value = prevValue;
+				} else {
+					sel.selectedIndex = Math.min(i, currentNames.length - 1);
+				}
+			});
+		}
+
+		document.getElementById('podiumBtn').addEventListener('click', () => {
+			const names = podiumSelects.map(sel => currentNames[Number(sel.value)] || '');
+			sendEvent({ type: 'podium', names, ts: Date.now() });
+			logLine('Podio final mostrado: '+JSON.stringify(names));
+		});
+
+		renderMarkTable();
+		renderPodiumSelects();
+	</script>
+</body>
+</html>
