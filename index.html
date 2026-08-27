@@ -209,25 +209,8 @@
 
 		.total { left: 82.03%; width: 11.20%; cursor: default; }
 
-		/* Real player name, drawn on the underline next to "PAREJA X:" in the artwork */
-		.name-label {
-			position: absolute;
-			left: 24%;
-			width: 6.5%;
-			display: flex;
-			align-items: center;
-			padding-top: 1.2%;
-			font-family: Arial, Helvetica, sans-serif;
-			font-weight: 700;
-			font-style: italic;
-			font-size: clamp(8px, 0.85vw, 15px);
-			color: #333;
-			white-space: nowrap;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			pointer-events: none;
-			z-index: 5;
-		}
+		/* Player names are kept in memory only (used by round/podium scene text) —
+		   they are intentionally never drawn onto the board itself. */
 
 		.numero-total {
 			font-family: Arial, Helvetica, sans-serif;
@@ -255,6 +238,7 @@
 		#sceneExtras {
 			position: absolute;
 			inset: 0;
+			z-index: 2;
 			pointer-events: none;
 			overflow: hidden;
 		}
@@ -281,8 +265,8 @@
 		/* Cortejo: animals popping in */
 		.pop-img {
 			position: absolute;
-			width: 90px;
-			height: 90px;
+			width: 150px;
+			height: 150px;
 			object-fit: contain;
 			filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5));
 			animation: popIn 1.6s cubic-bezier(.34,1.56,.64,1) both;
@@ -298,9 +282,9 @@
 		/* Globos: balloons floating upward */
 		.balloon-img {
 			position: absolute;
-			bottom: -120px;
-			width: 90px;
-			height: 90px;
+			bottom: -140px;
+			width: 140px;
+			height: 140px;
 			object-fit: contain;
 			animation: floatUp 3.4s ease-in forwards;
 		}
@@ -315,8 +299,8 @@
 			position: absolute;
 			left: 50%;
 			top: 50%;
-			width: 160px;
-			height: 160px;
+			width: 230px;
+			height: 230px;
 			object-fit: contain;
 			transform: translate(-50%,-50%);
 			animation: micPulse 1s ease-in-out infinite;
@@ -347,8 +331,8 @@
 		/* Winner scene: trophy / medal / party popper */
 		.winner-img {
 			position: absolute;
-			width: 120px;
-			height: 120px;
+			width: 190px;
+			height: 190px;
 			object-fit: contain;
 			filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
 			animation: winnerBounce 1.2s cubic-bezier(.34,1.56,.64,1) both;
@@ -357,6 +341,43 @@
 			0% { transform: scale(0) translateY(60px) rotate(-20deg); opacity: 0; }
 			60% { transform: scale(1.2) translateY(-10px) rotate(8deg); opacity: 1; }
 			100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
+		}
+
+		/* Podium: silver/bronze reuse other medal shapes, tinted */
+		.podium-medal.silver { filter: grayscale(1) brightness(1.35) drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
+		.podium-medal.bronze { filter: sepia(1) saturate(2) hue-rotate(-25deg) brightness(0.95) drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
+		.podium-bg {
+			position: absolute;
+			left: 50%;
+			bottom: 4%;
+			width: 60%;
+			max-width: 640px;
+			transform: translateX(-50%);
+			object-fit: contain;
+			opacity: 0;
+			animation: podiumRise 1s ease-out 0.1s forwards;
+			filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5));
+		}
+		@keyframes podiumRise {
+			0% { opacity: 0; transform: translate(-50%, 40px); }
+			100% { opacity: 1; transform: translate(-50%, 0); }
+		}
+		.podium-label {
+			position: absolute;
+			color: #fff;
+			font-weight: 800;
+			text-align: center;
+			text-shadow: 0 4px 10px rgba(0,0,0,0.7);
+			font-size: clamp(13px, 1.6vw, 24px);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			animation: labelPop 0.7s cubic-bezier(.34,1.56,.64,1) both;
+		}
+		@keyframes labelPop {
+			0% { transform: scale(0); opacity: 0; }
+			70% { transform: scale(1.15); opacity: 1; }
+			100% { transform: scale(1); opacity: 1; }
 		}
 
 		/* Intento fallido */
@@ -405,6 +426,7 @@
 
 		#sceneContent {
 			position: relative;
+			z-index: 1;
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -436,11 +458,6 @@
 				<div class="embedded-game">
 					<div class="tablero">
 						<div class="zona-titulo" id="zonaTitulo"></div>
-						<!-- Real player names, drawn over the "PAREJA X:" underline in the artwork -->
-						<div class="name-label fila1" id="nameLabel1"></div>
-						<div class="name-label fila2" id="nameLabel2"></div>
-						<div class="name-label fila3" id="nameLabel3"></div>
-						<div class="name-label fila4" id="nameLabel4"></div>
 						<!-- Row 1 -->
 						<button class="casilla fila1 ronda1"><img src="/resources/Logo.png" alt="Punto"></button>
 						<button class="casilla fila1 ronda2"><img src="/resources/Logo.png" alt="Punto"></button>
@@ -532,7 +549,15 @@
 				if(typeof window.burstAtElement === 'function') window.burstAtElement(casilla);
 			}
 
-			casillas.forEach((casilla) => {
+			// Marking a space announces that pareja's win for that ronda: index
+			// (0-15) maps to pareja = floor(idx/4), ronda = idx % 4.
+			function announceRound(idx){
+				if(typeof window.triggerRoundScene === 'function'){
+					window.triggerRoundScene(Math.floor(idx/4), idx % 4);
+				}
+			}
+
+			casillas.forEach((casilla, idx) => {
 				casilla.addEventListener('click', ()=>{
 					if(modoLogo2){
 						if(casilla.classList.contains('ronda4')){
@@ -546,6 +571,7 @@
 								imagen.alt='2 puntos';
 								casilla.classList.add('especial','activa');
 								burst(casilla);
+								announceRound(idx);
 							}
 							actualizarTotales();
 						}
@@ -554,6 +580,7 @@
 					casilla.classList.toggle('activa');
 					if(casilla.classList.contains('activa')){
 						burst(casilla);
+						announceRound(idx);
 					} else if(casilla.classList.contains('especial')){
 						const imagen = casilla.querySelector('img');
 						imagen.src = '/resources/Logo.png';
@@ -564,35 +591,17 @@
 				});
 			});
 
-			// Which parejas have already had their winner scene fired, so it only
-			// plays once per completed row (reset on ESC).
-			const wonParejas = new Set();
-
 			function actualizarTotales(){
 				for(let pareja=1; pareja<=4; pareja++){
 					const fila = Array.from(container.querySelectorAll('.casilla.fila'+pareja+':not(.total)'));
 					let puntos = 0;
-					let activeCount = 0;
 					fila.forEach(c=>{
 						if(c.classList.contains('activa')){
 							puntos += c.classList.contains('especial')?2:1;
-							activeCount++;
 						}
 					});
 					const el = container.querySelector('#total'+pareja);
 					if(el) el.textContent = puntos;
-
-					// Marking the last empty space in a pareja's row means that pareja
-					// just won the round: fire the automatic "PAREJA X GANADORA" scene.
-					const parejaIdx = pareja - 1;
-					if(activeCount === fila.length && fila.length > 0){
-						if(!wonParejas.has(parejaIdx)){
-							wonParejas.add(parejaIdx);
-							if(typeof window.triggerWinnerScene === 'function') window.triggerWinnerScene(parejaIdx);
-						}
-					} else {
-						wonParejas.delete(parejaIdx);
-					}
 				}
 			}
 
@@ -607,7 +616,6 @@
 						}
 					});
 					modoLogo2 = false;
-					wonParejas.clear();
 					actualizarTotales();
 				}
 			});
@@ -618,6 +626,7 @@
 				if(value){
 					c.classList.add('activa');
 					burst(c);
+					announceRound(idx);
 				} else {
 					c.classList.remove('activa');
 					c.classList.remove('especial');
@@ -631,15 +640,9 @@
 			};
 		})();
 
-		// SSE connection
+		// SSE connection. Names live only in this variable (never drawn on the
+		// board itself) — they're read by the round/podium scene text.
 		let playerNames = ['Pareja 1','Pareja 2','Pareja 3','Pareja 4'];
-
-		function renderPlayers(){
-			for(let i=0;i<4;i++){
-				const el = document.getElementById('nameLabel'+(i+1));
-				if(el) el.textContent = playerNames[i] || ('Pareja '+(i+1));
-			}
-		}
 
 		const statusDot = document.getElementById('statusDot');
 		const es = new EventSource('/events');
@@ -654,12 +657,15 @@
 				} else if (data.type === 'names'){
 					if(Array.isArray(data.names)){
 						playerNames = data.names.map(n => String(n || '').trim() || '');
-						renderPlayers();
 					}
 				} else if (data.type === 'space'){
 					const idx = Number(data.index);
 					if(typeof window.setEmbeddedSpace === 'function'){
 						try{ window.setEmbeddedSpace(idx, !!data.value); }catch(e){ console.warn('setEmbeddedSpace failed',e); }
+					}
+				} else if (data.type === 'podium'){
+					if(Array.isArray(data.names) && typeof window.triggerPodiumScene === 'function'){
+						window.triggerPodiumScene(data.names);
 					}
 				}
 			}catch(err){ console.error('Event parse error:', e.data); }
@@ -667,8 +673,6 @@
 		es.onerror = ()=>{
 			if(statusDot){ statusDot.classList.add('err'); statusDot.classList.remove('ok'); }
 		};
-
-		renderPlayers();
 
 		// Local particle burst at any element (used when a casilla gets marked)
 		(function(){
@@ -785,6 +789,14 @@
 					if(vars) for(const k in vars) img.style.setProperty(k, vars[k]);
 				}
 				extras.appendChild(img);
+			}
+
+			function addExtraLabel(text, style){
+				const d = document.createElement('div');
+				d.className = 'podium-label';
+				d.textContent = text;
+				if(style) Object.assign(d.style, style);
+				extras.appendChild(d);
 			}
 
 			function randomAnimalImages(n){
@@ -912,23 +924,46 @@
 				renderScene(cfg);
 			}
 
-			function triggerWinnerScene(parejaIdx){
-				const fallback = 'Pareja ' + (parejaIdx + 1);
-				const name = (playerNames[parejaIdx] || fallback).trim() || fallback;
+			// Fired on every "Marcar Espacio": a pareja just won that ronda.
+			function triggerRoundScene(parejaIdx, rondaIdx){
+				const fallback = 'PAREJA ' + (parejaIdx + 1);
+				const name = (playerNames[parejaIdx] || fallback).trim().toUpperCase() || fallback;
 				renderScene({
-					text: '¡' + name.toUpperCase() + ' GANADORA!',
+					text: 'GANADORES DE LA RONDA ' + (rondaIdx + 1) + ': ' + name,
 					colors: [{r:255,g:210,b:60},{r:255,g:105,b:180},{r:110,g:200,b:255},{r:120,g:255,b:140}],
 					images: () => [
-						{ src: GAME_ASSETS + 'trophy.png', cls: 'winner-img', style: { left: 'calc(50% - 60px)', top: '10%' } },
-						{ src: GAME_ASSETS + 'gold-medal.png', cls: 'winner-img', style: { left: 'calc(22% - 45px)', top: '58%', width: '90px', height: '90px', animationDelay: '0.15s' } },
-						{ src: GAME_ASSETS + 'party-popper.png', cls: 'winner-img', style: { left: 'calc(78% - 45px)', top: '58%', width: '90px', height: '90px', animationDelay: '0.3s' } }
+						{ src: GAME_ASSETS + 'trophy.png', cls: 'winner-img', style: { left: 'calc(50% - 95px)', top: '18%' } },
+						{ src: GAME_ASSETS + 'party-popper.png', cls: 'winner-img', style: { left: 'calc(15% - 60px)', top: '60%', width: '130px', height: '130px', animationDelay: '0.15s' } },
+						{ src: GAME_ASSETS + 'party-popper.png', cls: 'winner-img', style: { left: 'calc(85% - 70px)', top: '60%', width: '130px', height: '130px', animationDelay: '0.3s' } }
 					],
-					duration: 3800
+					duration: 2800
+				});
+			}
+
+			// Manually triggered from the controller's "Podio Final" panel: the
+			// overall winners for 1st, 2nd and 3rd place.
+			function triggerPodiumScene(names){
+				renderScene({
+					text: 'PODIO FINAL',
+					colors: [{r:255,g:210,b:60},{r:210,g:210,b:225},{r:205,g:127,b:50},{r:255,g:255,b:255}],
+					images: () => [
+						{ src: GAME_ASSETS + 'sports-podium.png', cls: 'podium-bg' },
+						{ src: GAME_ASSETS + 'gold-medal.png', cls: 'winner-img', style: { left: 'calc(50% - 95px)', top: '4%' } },
+						{ src: GAME_ASSETS + 'triathlon-medal.png', cls: 'winner-img podium-medal silver', style: { left: 'calc(20% - 70px)', top: '20%', width: '150px', height: '150px', animationDelay: '0.15s' } },
+						{ src: GAME_ASSETS + 'beach-volleyball-medal.png', cls: 'winner-img podium-medal bronze', style: { left: 'calc(80% - 70px)', top: '24%', width: '150px', height: '150px', animationDelay: '0.3s' } }
+					],
+					duration: 5200
+				});
+				requestAnimationFrame(()=>{
+					addExtraLabel('🥇 ' + String(names[0] || '—').toUpperCase(), { left: 'calc(50% - 110px)', top: '38%', width: '220px' });
+					addExtraLabel('🥈 ' + String(names[1] || '—').toUpperCase(), { left: 'calc(20% - 90px)', top: '52%', width: '180px' });
+					addExtraLabel('🥉 ' + String(names[2] || '—').toUpperCase(), { left: 'calc(80% - 90px)', top: '56%', width: '180px' });
 				});
 			}
 
 			window.showScene = showScene;
-			window.triggerWinnerScene = triggerWinnerScene;
+			window.triggerRoundScene = triggerRoundScene;
+			window.triggerPodiumScene = triggerPodiumScene;
 		})();
 	</script>
 </body>
