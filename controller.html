@@ -76,6 +76,12 @@
 		}
 		.mark-btn:hover{background:#252836}
 		.mark-btn.active{background:var(--accent-2);color:#04303a;border-color:var(--accent-2);font-weight:700}
+		.custom-score-form{display:grid;grid-template-columns:1fr 110px auto;gap:8px;align-items:end}
+		.custom-score-field{display:flex;flex-direction:column;gap:4px}
+		.custom-score-field label{font-size:11px;color:var(--text-dim);font-weight:600}
+		.custom-score-field select,.custom-score-field input{width:100%;padding:8px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--panel-2);color:var(--text)}
+		#customScoreBtn{padding:8px 12px;border-radius:7px;border:1px solid #33407a;background:#1c2340;color:#a9b6ff;font-weight:700;cursor:pointer;white-space:nowrap}
+		#customScoreBtn:hover{background:#252f55}
 
 		.podium-form{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 		.podium-field{display:flex;flex-direction:column;gap:4px}
@@ -137,6 +143,16 @@
 	</section>
 
 	<section class="group">
+		<h2><span class="n">4</span>Puntaje especial — Cántala si puedes</h2>
+		<p class="hint" style="margin:0 0 10px 0">Usá esta opción cuando el presentador indique que la pareja ganadora recibe más de 1 punto. El puntaje reemplaza el valor de la Ronda 4.</p>
+		<div class="custom-score-form">
+			<div class="custom-score-field"><label for="customScorePair">Pareja ganadora</label><select id="customScorePair"></select></div>
+			<div class="custom-score-field"><label for="customScorePoints">Puntos</label><input id="customScorePoints" type="number" min="1" max="99" step="1" value="1" /></div>
+			<button id="customScoreBtn" type="button">⭐ Aplicar puntos</button>
+		</div>
+	</section>
+
+	<section class="group">
 		<h2><span class="n">4</span>Podio Final</h2>
 		<p class="hint" style="margin:0 0 10px 0">Elegí manualmente las 3 parejas ganadoras del programa y mostrá la escena final del podio.</p>
 		<div class="podium-form">
@@ -148,7 +164,7 @@
 	</section>
 
 	<section class="group">
-		<h2><span class="n">5</span>Registro de Eventos</h2>
+		<h2><span class="n">6</span>Registro de Eventos</h2>
 		<pre id="log"></pre>
 	</section>
 
@@ -267,6 +283,7 @@
 
 		renderMarkTable();
 		renderPodiumSelects();
+		renderCustomScorePair();
 	</script>
 </body>
 </html>
