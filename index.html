@@ -582,7 +582,7 @@
 					let puntos = 0;
 					fila.forEach(c=>{
 						if(c.classList.contains('activa')){
-							puntos += c.classList.contains('especial')?2:1;
+							puntos += Number(c.dataset.points || (c.classList.contains('especial') ? 2 : 1));
 						}
 					});
 					const el = container.querySelector('#total'+pareja);
@@ -647,6 +647,12 @@
 					const idx = Number(data.index);
 					if(typeof window.setEmbeddedSpace === 'function'){
 						try{ window.setEmbeddedSpace(idx, !!data.value); }catch(e){ console.warn('setEmbeddedSpace failed',e); }
+					}
+				} else if(data.type === 'customScore'){
+					const idx = Number(data.index);
+					const points = Math.max(1, Number(data.points) || 1);
+					if(typeof window.setEmbeddedCustomScore === 'function'){
+						try{ window.setEmbeddedCustomScore(idx, points); }catch(e){ console.warn('setEmbeddedCustomScore failed',e); }
 					}
 				} else if (data.type === 'podium'){
 					if(Array.isArray(data.names) && typeof window.triggerPodiumScene === 'function'){
