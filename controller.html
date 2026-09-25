@@ -214,11 +214,13 @@
 			logLine('Nombres actualizados (memoria): '+JSON.stringify(currentNames));
 			renderMarkTable();
 			renderPodiumSelects();
+			renderCustomScorePair();
 		});
 		nameInputs.forEach(el => el.addEventListener('input', () => {
 			currentNames = nameInputs.map((n, i) => n.value || ('Pareja '+(i+1)));
 			renderMarkTable();
 			renderPodiumSelects();
+			renderCustomScorePair();
 		}));
 
 		// Marcar Espacios: 4 parejas x 4 rondas, index matches the board's casilla order (0-15)
@@ -253,6 +255,42 @@
 				markBody.appendChild(tr);
 			}
 		}
+
+		// Puntaje especial de "Cántala si puedes"
+		const customScorePair = document.getElementById('customScorePair');
+		const customScorePoints = document.getElementById('customScorePoints');
+
+		function renderCustomScorePair(){
+			if(!customScorePair) return;
+			const previous = customScorePair.value;
+			customScorePair.innerHTML = '';
+
+			currentNames.forEach((name, idx) => {
+				const option = document.createElement('option');
+				option.value = String(idx);
+				option.textContent = name || ('Pareja ' + (idx + 1));
+				customScorePair.appendChild(option);
+			});
+
+			if(previous !== '' && Number(previous) < currentNames.length){
+				customScorePair.value = previous;
+			}
+		}
+
+		document.getElementById('customScoreBtn').addEventListener('click', () => {
+			const pareja = Number(customScorePair.value);
+			const points = Math.max(1, Math.floor(Number(customScorePoints.value) || 1));
+			const index = pareja * 4 + 3;
+
+			sendEvent({
+				type: 'customScore',
+				index,
+				points,
+				ts: Date.now()
+			});
+
+			logLine('Puntaje especial: ' + (currentNames[pareja] || ('Pareja ' + (pareja + 1))) + ' = ' + points + ' puntos');
+		});
 
 		// Podio Final: pick 3 parejas by current name, trigger the podium scene
 		const podiumSelects = [1,2,3].map(i => document.getElementById('podium'+i));
